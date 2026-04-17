@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  USER
+  PROVIDER
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  fullName     String
+  email        String   @unique
+  phone        String?  @unique
+  passwordHash String
+  role         Role     @default(USER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  providerProfile ProviderProfile?
+  services        Service[]
+  
+  bookingsAsUser     Booking[] @relation("UserBookings")
+  bookingsAsProvider Booking[] @relation("ProviderBookings")
+  
+  reviewsAsUser     Review[] @relation("UserReviews")
+  reviewsAsProvider Review[] @relation("ProviderReviews")
+}
+
+model ProviderProfile {
+  id              String  @id @default(uuid())
+  userId          String  @unique
+  businessName    String
+  bio             String?
+  experienceYears Int?    @default(0)
+  rating          Float   @default(0.0)
+  totalJobs       Int     @default(0)
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Service {
+  id              String   @id @default(uuid())
+  providerId      String
+  title           String
+  category        String
+  description     String
+  price           Float
+  durationMinutes Int
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  provider User      @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+}
+
+model Booking {
+  id          String        @id @default(uuid())
+  userId      String
+  providerId  String
+  serviceId   String
+  status      BookingStatus @default(PENDING)
+  bookingDate DateTime
+  address     String
+  totalAmount Float
+  createdAt   DateTime      @default(now())
+
+  user     User      @relation("UserBookings", fields: [userId], references: [id])
+  provider User      @relation("ProviderBookings", fields: [providerId], references: [id])
+  service  Service   @relation(fields: [serviceId], references: [id])
+  
+  payment Payment?
+  review  Review?
+}
+
+model Payment {
+  id               String   @id @default(uuid())
+  bookingId        String   @unique
+  amount           Float
+  method           String
+  status           String
+  gatewayOrderId   String?
+  gatewayPaymentId String?
+  createdAt        DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  bookingId  String   @unique
+  userId     String
+  providerId String
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+
+  booking  Booking @relation(fields: [bookingId], references: [id])
+  user     User    @relation("UserReviews", fields: [userId], references: [id])
+  provider User    @relation("ProviderReviews", fields: [providerId], references: [id])
+}
