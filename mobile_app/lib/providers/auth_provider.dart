@@ -57,7 +57,11 @@ class AuthProvider extends ChangeNotifier {
 
       final response = await ApiClient.get(AppConstants.verifyMeEndpoint);
       final rawUser = response.data['user'] ?? response.data;
+      debugPrint('SESSION_RESTORE: Received raw user data: $rawUser');
+      
       _user = UserModel.fromJson(rawUser as Map<String, dynamic>);
+      debugPrint('SESSION_RESTORE: Parsed user. isRoleSet: ${_user?.isRoleSet}');
+      
       _setLoading(false);
       return true;
     } on UnauthorizedException {

@@ -48,6 +48,7 @@ const register = async (req, res) => {
             fullName: result.fullName,
             email: result.email,
             role: result.role,
+            isRoleSet: true,
         },
     });
 };
@@ -78,6 +79,7 @@ const login = async (req, res) => {
             fullName: user.fullName,
             email: user.email,
             role: user.role,
+            isRoleSet: user.isRoleSet,
             providerProfile: user.providerProfile,
         },
     });

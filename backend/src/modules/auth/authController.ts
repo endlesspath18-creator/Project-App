@@ -56,6 +56,7 @@ export const register = async (req: Request, res: Response) => {
       fullName: result.fullName,
       email: result.email,
       role: result.role,
+      isRoleSet: true,
     },
   });
 };
@@ -93,6 +94,7 @@ export const login = async (req: Request, res: Response) => {
       fullName: user.fullName,
       email: user.email,
       role: user.role,
+      isRoleSet: user.isRoleSet,
       providerProfile: user.providerProfile,
     },
   });

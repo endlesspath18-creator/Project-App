@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/api_client.dart';
+import '../core/constants.dart';
 import '../data/service_model.dart';
 
 class ServiceProvider extends ChangeNotifier {
@@ -27,8 +28,9 @@ class ServiceProvider extends ChangeNotifier {
       if (category != null && category != 'All') queryParams['category'] = category;
       if (query != null && query.isNotEmpty) queryParams['searchQuery'] = query;
 
-      final uri = Uri(path: '/services', queryParameters: queryParams.isNotEmpty ? queryParams : null).toString();
+      final uri = Uri(path: AppConstants.servicesEndpoint, queryParameters: queryParams.isNotEmpty ? queryParams : null).toString();
       
+      debugPrint('FETCH_SERVICES: Requesting $uri');
       final response = await ApiClient.get(uri);
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['data'] ?? [];
@@ -46,7 +48,8 @@ class ServiceProvider extends ChangeNotifier {
     _setLoading(true);
     _error = null;
     try {
-      final response = await ApiClient.get('/services/my-services');
+      debugPrint('FETCH_MY_SERVICES: Requesting ${AppConstants.providerServicesEndpoint}');
+      final response = await ApiClient.get(AppConstants.providerServicesEndpoint);
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['data'] ?? [];
         _providerServices = data.map((s) => ServiceModel.fromJson(s as Map<String, dynamic>)).toList();
@@ -61,8 +64,9 @@ class ServiceProvider extends ChangeNotifier {
   // ─── Add New Service ───────────────────────────────────────────────────────
   Future<bool> addService(ServiceModel service) async {
     _setLoading(true);
+    debugPrint('ADD_SERVICE: Sending POST to ${AppConstants.servicesEndpoint}');
     try {
-      final response = await ApiClient.post('/services', service.toJson());
+      final response = await ApiClient.post(AppConstants.servicesEndpoint, service.toJson());
       if (response.statusCode == 201) {
         await fetchProviderServices(); // Refresh local provider list
         return true;

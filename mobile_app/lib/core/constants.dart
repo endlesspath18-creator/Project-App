@@ -9,4 +9,6 @@ class AppConstants {
   static const String googleLoginEndpoint = '/api/auth/google';
   static const String socialSignupEndpoint = '/api/auth/complete-social-signup';
   static const String verifyMeEndpoint = '/api/auth/me';
+  static const String servicesEndpoint = '/api/services';
+  static const String providerServicesEndpoint = '/api/services/my-services';
 }
