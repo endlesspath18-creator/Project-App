@@ -115,6 +115,7 @@ class ApiClient {
 
   static Future<ApiResponse> post(String endpoint, Map<String, dynamic> body) async {
     final url = Uri.parse('${AppConstants.baseUrl}$endpoint');
+    _log('FULL_REQUEST_URL: $url');
     _log('POST $url');
     try {
       final headers = await _buildHeaders(endpoint);

@@ -23,6 +23,12 @@ app.get("/health", (req: Request, res: Response) => {
   res.status(200).json({ status: "OK", message: "Marketplace Server is running" });
 });
 
+// Request Logger (Debug)
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 // API Routes
 const API_PREFIX = "/api";
 app.use(`${API_PREFIX}/auth`, authRoutes);
