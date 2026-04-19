@@ -1,0 +1,35 @@
+import 'user_model.dart';
+
+class AuthResponse {
+  final UserModel? user;
+  final String? token;
+  final String? message;
+  final bool success;
+
+  AuthResponse({
+    this.user,
+    this.token,
+    this.message,
+    required this.success,
+  });
+
+  factory AuthResponse.fromJson(Map<String, dynamic> json) {
+    // Extract token from possible locations in the response.
+    String? extractedToken;
+    if (json['token'] != null) {
+      extractedToken = json['token'] as String?;
+    } else if (json['accessToken'] != null) {
+      extractedToken = json['accessToken'] as String?;
+    } else if (json['data'] != null && json['data'] is Map<String, dynamic>) {
+      final dataMap = json['data'] as Map<String, dynamic>;
+      extractedToken = dataMap['token'] ?? dataMap['accessToken'];
+    }
+
+    return AuthResponse(
+      user: json['user'] != null ? UserModel.fromJson(json['user']) : null,
+      token: extractedToken,
+      message: json['message'],
+      success: json['success'] ?? (extractedToken != null),
+    );
+  }
+}

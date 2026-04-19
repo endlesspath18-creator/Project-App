@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "729856229058",
+    "project_id": "endlesspathservices-bafb0",
+    "storage_bucket": "endlesspathservices-bafb0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:729856229058:android:ad9dc6a0790de92cf8855b",
+        "android_client_info": {
+          "package_name": "com.endlesspath.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "729856229058-omln0u5lrg90emttrih7oqu9ofkh6qll.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhuOJ_fcqMaYqD8vM8kpUR1l1utZopYQw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "729856229058-omln0u5lrg90emttrih7oqu9ofkh6qll.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
