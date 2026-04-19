@@ -5,7 +5,8 @@ import { generateToken } from "../../utils/jwt";
 import { sendResponse, sendError } from "../../utils/response";
 import { OAuth2Client } from "google-auth-library";
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
+const client = new OAuth2Client(googleClientId);
 
 export const register = async (req: Request, res: Response) => {
   const { fullName, email, phone, password, role, businessName } = req.body;
@@ -73,6 +74,10 @@ export const login = async (req: Request, res: Response) => {
     return sendError(res, 401, "Invalid credentials or inactive account");
   }
 
+  if (!user.passwordHash) {
+    return sendError(res, 401, "This account is linked with Google. Please login using Google.");
+  }
+
   const isMatch = await verifyPassword(password, user.passwordHash);
 
   if (!isMatch) {
@@ -133,7 +138,7 @@ export const googleLogin = async (req: Request, res: Response) => {
   try {
     const ticket = await client.verifyIdToken({
       idToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: googleClientId,
     });
 
     const payload = ticket.getPayload();

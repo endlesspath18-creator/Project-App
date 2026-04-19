@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.loginSchema = exports.registerSchema = void 0;
+exports.completeSocialSignupSchema = exports.googleLoginSchema = exports.loginSchema = exports.registerSchema = void 0;
 const zod_1 = require("zod");
 exports.registerSchema = zod_1.z.object({
     body: zod_1.z.object({
@@ -24,5 +24,24 @@ exports.loginSchema = zod_1.z.object({
     body: zod_1.z.object({
         email: zod_1.z.string().email("Invalid email address"),
         password: zod_1.z.string().min(1, "Password is required"),
+    })
+});
+exports.googleLoginSchema = zod_1.z.object({
+    body: zod_1.z.object({
+        idToken: zod_1.z.string().min(1, "ID Token is required"),
+    })
+});
+exports.completeSocialSignupSchema = zod_1.z.object({
+    body: zod_1.z.object({
+        role: zod_1.z.enum(["USER", "PROVIDER"]),
+        businessName: zod_1.z.string().optional(),
+    }).refine((data) => {
+        if (data.role === "PROVIDER" && (!data.businessName || data.businessName.trim() === "")) {
+            return false;
+        }
+        return true;
+    }, {
+        message: "businessName is required when role is PROVIDER",
+        path: ["businessName"]
     })
 });

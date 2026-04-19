@@ -9,6 +9,8 @@ require("express-async-errors");
 const router = (0, express_1.Router)();
 router.post("/register", (0, validate_1.validate)(authSchema_1.registerSchema), authController_1.register);
 router.post("/login", (0, validate_1.validate)(authSchema_1.loginSchema), authController_1.login);
+router.post("/google", (0, validate_1.validate)(authSchema_1.googleLoginSchema), authController_1.googleLogin);
+router.post("/complete-social-signup", authMiddleware_1.protect, (0, validate_1.validate)(authSchema_1.completeSocialSignupSchema), authController_1.completeSocialSignup);
 router.post("/logout", authMiddleware_1.protect, authController_1.logout);
 router.get("/me", authMiddleware_1.protect, authController_1.getMe);
 exports.default = router;

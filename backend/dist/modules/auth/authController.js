@@ -1,10 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logout = exports.getMe = exports.login = exports.register = void 0;
+exports.completeSocialSignup = exports.googleLogin = exports.logout = exports.getMe = exports.login = exports.register = void 0;
 const db_1 = require("../../config/db");
 const hash_1 = require("../../utils/hash");
 const jwt_1 = require("../../utils/jwt");
 const response_1 = require("../../utils/response");
+const google_auth_library_1 = require("google-auth-library");
+const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
+const client = new google_auth_library_1.OAuth2Client(googleClientId);
 const register = async (req, res) => {
     const { fullName, email, phone, password, role, businessName } = req.body;
     // Check if user already exists
@@ -60,6 +63,9 @@ const login = async (req, res) => {
     if (!user || !user.isActive) {
         return (0, response_1.sendError)(res, 401, "Invalid credentials or inactive account");
     }
+    if (!user.passwordHash) {
+        return (0, response_1.sendError)(res, 401, "This account is linked with Google. Please login using Google.");
+    }
     const isMatch = await (0, hash_1.verifyPassword)(password, user.passwordHash);
     if (!isMatch) {
         return (0, response_1.sendError)(res, 401, "Invalid credentials");
@@ -107,3 +113,104 @@ const logout = async (req, res) => {
     (0, response_1.sendResponse)(res, 200, "Logged out successfully (Please clear token on client)");
 };
 exports.logout = logout;
+const googleLogin = async (req, res) => {
+    const { idToken } = req.body;
+    try {
+        const ticket = await client.verifyIdToken({
+            idToken,
+            audience: googleClientId,
+        });
+        const payload = ticket.getPayload();
+        if (!payload || !payload.email) {
+            return (0, response_1.sendError)(res, 400, "Invalid ID Token");
+        }
+        const { email, name, sub: googleId } = payload;
+        // Find or create user
+        let user = await db_1.prisma.user.findUnique({
+            where: { email },
+            include: { providerProfile: true }
+        });
+        if (!user) {
+            // Create new user (role selection mandatory next)
+            user = await db_1.prisma.user.create({
+                data: {
+                    email,
+                    fullName: name || "Google User",
+                    googleId,
+                    isRoleSet: false,
+                    // role defaults to USER, but isRoleSet = false triggers onboarding
+                },
+                include: { providerProfile: true }
+            });
+        }
+        else if (!user.googleId) {
+            // Link Google ID if it's an existing email user
+            user = await db_1.prisma.user.update({
+                where: { id: user.id },
+                data: { googleId },
+                include: { providerProfile: true }
+            });
+        }
+        const token = (0, jwt_1.generateToken)({ id: user.id, role: user.role });
+        (0, response_1.sendResponse)(res, 200, "Google login successful", {
+            token,
+            user: {
+                id: user.id,
+                fullName: user.fullName,
+                email: user.email,
+                role: user.role,
+                isRoleSet: user.isRoleSet,
+                providerProfile: user.providerProfile,
+            },
+        });
+    }
+    catch (error) {
+        console.error("Google Auth Error:", error);
+        return (0, response_1.sendError)(res, 401, "Google authentication failed");
+    }
+};
+exports.googleLogin = googleLogin;
+const completeSocialSignup = async (req, res) => {
+    const userId = req.user?.id;
+    const { role, businessName } = req.body;
+    if (!userId) {
+        return (0, response_1.sendError)(res, 401, "Not authenticated");
+    }
+    const user = await db_1.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+        return (0, response_1.sendError)(res, 404, "User not found");
+    }
+    if (user.isRoleSet) {
+        return (0, response_1.sendError)(res, 400, "Role is already set and cannot be changed");
+    }
+    const result = await db_1.prisma.$transaction(async (tx) => {
+        const updatedUser = await tx.user.update({
+            where: { id: userId },
+            data: {
+                role,
+                isRoleSet: true,
+            },
+        });
+        if (role === "PROVIDER" && businessName) {
+            await tx.providerProfile.create({
+                data: {
+                    userId,
+                    businessName,
+                },
+            });
+        }
+        return updatedUser;
+    });
+    const token = (0, jwt_1.generateToken)({ id: result.id, role: result.role });
+    (0, response_1.sendResponse)(res, 200, "Profile completed successfully", {
+        token,
+        user: {
+            id: result.id,
+            fullName: result.fullName,
+            email: result.email,
+            role: result.role,
+            isRoleSet: true,
+        },
+    });
+};
+exports.completeSocialSignup = completeSocialSignup;

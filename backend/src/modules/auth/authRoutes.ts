@@ -15,5 +15,3 @@ router.post("/logout", protect, logout);
 router.get("/me", protect, getMe);
 
 export default router;
-
-export default router;
