@@ -165,8 +165,8 @@ const googleLogin = async (req, res) => {
         });
     }
     catch (error) {
-        console.error("Google Auth Error:", error);
-        return (0, response_1.sendError)(res, 401, "Google authentication failed");
+        console.error("Google login verification failed:", error);
+        return res.status(401).json({ message: "Google authentication failed" });
     }
 };
 exports.googleLogin = googleLogin;

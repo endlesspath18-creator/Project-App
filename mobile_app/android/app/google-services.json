@@ -7,12 +7,20 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:729856229058:android:ad9dc6a0790de92cf8855b",
+        "mobilesdk_app_id": "1:729856229058:android:d57e7b19fa0972fcf8855b",
         "android_client_info": {
-          "package_name": "com.endlesspath.app"
+          "package_name": "com.endlesspathservices.app"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "729856229058-cggq48kb1uhqqkucpctu9m6rimoql4pu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.endlesspathservices.app",
+            "certificate_hash": "f29d8137cad908e05b1df007443c8aeefbee13c5"
+          }
+        },
         {
           "client_id": "729856229058-omln0u5lrg90emttrih7oqu9ofkh6qll.apps.googleusercontent.com",
           "client_type": 3

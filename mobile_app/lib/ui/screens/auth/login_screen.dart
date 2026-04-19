@@ -209,7 +209,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                   );
                                 } else if (auth.user != null && !auth.user!.isRoleSet) {
                                   // New user - needs role selection
-                                  Navigator.of(context).pushNamed(AppRoutes.roleSelection);
+                                  Navigator.of(context).pushReplacementNamed(AppRoutes.roleSelection);
+                                } else if (auth.error != null) {
+                                  // Show error if something went wrong
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(auth.error!),
+                                      backgroundColor: Colors.redAccent,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    ),
+                                  );
                                 }
                               }
                             },

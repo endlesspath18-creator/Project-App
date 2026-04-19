@@ -92,11 +92,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                         
                         if (success && mounted) {
                           Navigator.of(context).pushReplacementNamed(
-                            _selectedRole == 'PROVIDER' ? AppConstants.registerEndpoint : AppRoutes.userHome,
-                          );
-                          // Note: Provider might need further profile creation, 
-                          // but for now we redirect to their home or appropriate setup
-                          Navigator.of(context).pushReplacementNamed(
                             _selectedRole == 'PROVIDER' ? AppRoutes.providerHome : AppRoutes.userHome,
                           );
                         }

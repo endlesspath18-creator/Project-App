@@ -139,48 +139,63 @@ class AuthProvider extends ChangeNotifier {
 
   // ─── Google Sign-In ────────────────────────────────────────────────────────
   Future<bool> signInWithGoogle() async {
+    debugPrint('STEP 0: Clearing any stale sessions');
+    await StorageService.deleteToken();
+    
+    debugPrint('STEP 1: Google login started');
     _setLoading(true);
     _setError(null);
 
     try {
       // 1. Trigger Google Sign-In Flow
+      debugPrint('STEP 2: Opening Google account picker');
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
+        debugPrint('STEP 2b: User cancelled account selection');
         _setLoading(false);
         return false;
       }
+      debugPrint('STEP 3: Account selected: ${googleUser.email}');
 
       // 2. Get Google Auth Credentials (ID Token)
+      debugPrint('STEP 4: Fetching authentication tokens');
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final String? idToken = googleAuth.idToken;
 
       if (idToken == null) {
+        debugPrint('STEP 4b: Failed to retrieve ID Token');
         _setError('Could not retrieve Google ID Token.');
         _setLoading(false);
         return false;
       }
+      debugPrint('STEP 5: ID Token retrieved successfully');
 
       // 3. Send ID Token to Backend
+      debugPrint('STEP 6: Sending ID Token to backend: ${AppConstants.googleLoginEndpoint}');
       final response = await ApiClient.post(AppConstants.googleLoginEndpoint, {
         'idToken': idToken,
       });
+      debugPrint('STEP 7: Backend response received: ${response.statusCode}');
 
       final authResponse = AuthResponse.fromJson(response.data);
       if (authResponse.token != null) {
+        debugPrint('STEP 8: backend JWT received, saving session');
         await StorageService.saveToken(authResponse.token!);
         _user = authResponse.user;
         
+        debugPrint('STEP 9: User state updated. isRoleSet: ${_user?.isRoleSet}');
         _setLoading(false);
         
         // Return true only if role is already set
         return _user?.isRoleSet ?? false;
       }
 
+      debugPrint('STEP 8b: Backend login failed - no token');
       _setError('Google login failed: no token received from server.');
       _setLoading(false);
       return false;
     } catch (e) {
-      debugPrint('Google Sign-In Error: $e');
+      debugPrint('STEP ERROR: Google Sign-In Error: $e');
       _setError('An error occurred during Google Sign-In: $e');
       _setLoading(false);
       return false;

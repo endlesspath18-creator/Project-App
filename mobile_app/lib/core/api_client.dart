@@ -42,12 +42,18 @@ class ApiClient {
     }
   }
 
-  static Future<Map<String, String>> _buildHeaders() async {
+  static Future<Map<String, String>> _buildHeaders(String endpoint) async {
     final token = await StorageService.getToken();
+    
+    // Do not send Authorization header for public auth routes to avoid session collisions.
+    final bool isPublicAuthRoute = endpoint.contains('/auth/login') || 
+                                    endpoint.contains('/auth/register') || 
+                                    endpoint.contains('/auth/google');
+
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
+      if (token != null && !isPublicAuthRoute) 'Authorization': 'Bearer $token',
     };
   }
 
@@ -111,7 +117,7 @@ class ApiClient {
     final url = Uri.parse('${AppConstants.baseUrl}$endpoint');
     _log('POST $url');
     try {
-      final headers = await _buildHeaders();
+      final headers = await _buildHeaders(endpoint);
       final response = await _executeWithRetry(
         () => http.post(url, headers: headers, body: jsonEncode(body)),
       );
@@ -127,7 +133,7 @@ class ApiClient {
     final url = Uri.parse('${AppConstants.baseUrl}$endpoint');
     _log('GET $url');
     try {
-      final headers = await _buildHeaders();
+      final headers = await _buildHeaders(endpoint);
       final response = await _executeWithRetry(
         () => http.get(url, headers: headers),
       );
