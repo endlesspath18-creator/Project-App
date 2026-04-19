@@ -65,6 +65,7 @@ const getServiceById = async (req, res) => {
 };
 exports.getServiceById = getServiceById;
 const createService = async (req, res) => {
+    console.log("DEBUG: createService request body:", req.body);
     const providerId = req.user.id;
     const { title, category, description, price, durationMinutes, images } = req.body;
     const newService = await db_1.prisma.service.create({

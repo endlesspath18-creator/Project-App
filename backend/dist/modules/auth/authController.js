@@ -96,6 +96,7 @@ const getMe = async (req, res) => {
             email: true,
             phone: true,
             role: true,
+            isRoleSet: true,
             isActive: true,
             createdAt: true,
             providerProfile: true, // Auto includes if they are provider

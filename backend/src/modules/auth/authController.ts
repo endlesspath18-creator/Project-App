@@ -113,6 +113,7 @@ export const getMe = async (req: Request, res: Response) => {
       email: true,
       phone: true,
       role: true,
+      isRoleSet: true,
       isActive: true,
       createdAt: true,
       providerProfile: true, // Auto includes if they are provider

@@ -56,17 +56,31 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
         providerName: authProvider.user?.fullName ?? '',
       );
 
-      final success = await serviceProvider.addService(newService);
+      try {
+        final success = await serviceProvider.addService(newService);
 
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Service added successfully! 🎉')),
-        );
-        Navigator.pop(context);
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to add service. Please try again.')),
-        );
+        if (success && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Service added successfully! 🎉')),
+          );
+          Navigator.pop(context);
+        } else if (mounted) {
+          final errorMessage = serviceProvider.error ?? 'Failed to add service. Please try again.';
+          debugPrint('SUBMIT_SERVICE_ERROR: $errorMessage');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint('SUBMIT_SERVICE_FATAL_ERROR: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent),
+          );
+        }
       }
     }
   }
@@ -168,7 +182,11 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                                     controller: _priceController,
                                     keyboardType: TextInputType.number,
                                     decoration: _buildInputDecoration('999'),
-                                    validator: (v) => v!.isEmpty ? 'Required' : null,
+                                    validator: (v) {
+                                      if (v == null || v.isEmpty) return 'Required';
+                                      if (double.tryParse(v) == null) return 'Invalid number';
+                                      return null;
+                                    },
                                   ),
                                 ],
                               ),
@@ -181,8 +199,13 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                                   _buildLabel('Duration'),
                                   TextFormField(
                                     controller: _durationController,
-                                    decoration: _buildInputDecoration('2 Hours'),
-                                    validator: (v) => v!.isEmpty ? 'Required' : null,
+                                    keyboardType: TextInputType.number,
+                                    decoration: _buildInputDecoration('e.g. 60 (Minutes)'),
+                                    validator: (v) {
+                                      if (v == null || v.isEmpty) return 'Required';
+                                      if (int.tryParse(v) == null) return 'Invalid integer';
+                                      return null;
+                                    },
                                   ),
                                 ],
                               ),

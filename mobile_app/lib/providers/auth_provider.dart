@@ -139,7 +139,13 @@ class AuthProvider extends ChangeNotifier {
 
   // ─── Google Sign-In ────────────────────────────────────────────────────────
   Future<bool> signInWithGoogle() async {
-    debugPrint('STEP 0: Clearing any stale sessions');
+    debugPrint('STEP 0: Clearing any stale sessions and forcing account chooser');
+    try {
+      await _googleSignIn.signOut();
+      await _googleSignIn.disconnect();
+    } catch (e) {
+      debugPrint('STEP 0b: No previous session to disconnect: $e');
+    }
     await StorageService.deleteToken();
     
     debugPrint('STEP 1: Google login started');
@@ -148,7 +154,7 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       // 1. Trigger Google Sign-In Flow
-      debugPrint('STEP 2: Opening Google account picker');
+      debugPrint('STEP 2: Opening Google account picker (Forcing chooser)');
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         debugPrint('STEP 2b: User cancelled account selection');

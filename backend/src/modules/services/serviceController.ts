@@ -70,6 +70,7 @@ export const getServiceById = async (req: Request, res: Response) => {
 };
 
 export const createService = async (req: Request, res: Response) => {
+  console.log("DEBUG: createService request body:", req.body);
   const providerId = req.user!.id;
   const { title, category, description, price, durationMinutes, images } = req.body;
 
