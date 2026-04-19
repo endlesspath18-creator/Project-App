@@ -183,11 +183,11 @@ class AuthProvider extends ChangeNotifier {
         await StorageService.saveToken(authResponse.token!);
         _user = authResponse.user;
         
-        debugPrint('STEP 9: User state updated. isRoleSet: ${_user?.isRoleSet}');
+        debugPrint('STEP 9: User state updated. User exist: ${_user != null}, isRoleSet: ${_user?.isRoleSet}');
         _setLoading(false);
         
-        // Return true only if role is already set
-        return _user?.isRoleSet ?? false;
+        // Return true only if user is fully logged in and role is set
+        return _user != null && _user!.isRoleSet;
       }
 
       debugPrint('STEP 8b: Backend login failed - no token');

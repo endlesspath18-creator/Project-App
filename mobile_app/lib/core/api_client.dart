@@ -145,6 +145,22 @@ class ApiClient {
     }
   }
 
+  static Future<ApiResponse> patch(String endpoint, Map<String, dynamic> body) async {
+    final url = Uri.parse('${AppConstants.baseUrl}$endpoint');
+    _log('PATCH $url');
+    try {
+      final headers = await _buildHeaders(endpoint);
+      final response = await _executeWithRetry(
+        () => http.patch(url, headers: headers, body: jsonEncode(body)),
+      );
+      return _parseResponse(response);
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw _classify(e);
+    }
+  }
+
   static ApiResponse _parseResponse(http.Response response) {
     _log('Response ${response.statusCode}: ${response.body.length} bytes');
     late Map<String, dynamic> data;

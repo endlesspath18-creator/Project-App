@@ -7,6 +7,7 @@ export const createServiceSchema = z.object({
     description: z.string().min(10, "Description must be at least 10 characters"),
     price: z.number().positive("Price must be positive"),
     durationMinutes: z.number().int().positive("Duration must be a positive integer"),
+    images: z.array(z.string().url("Invalid image URL")).optional(),
   })
 });
 
@@ -18,5 +19,7 @@ export const updateServiceSchema = z.object({
     price: z.number().positive().optional(),
     durationMinutes: z.number().int().positive().optional(),
     isActive: z.boolean().optional(),
+    status: z.enum(["AVAILABLE", "BUSY", "DISABLED"]).optional(),
+    images: z.array(z.string().url()).optional(),
   })
 });

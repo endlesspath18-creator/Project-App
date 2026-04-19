@@ -4,7 +4,8 @@ import {
   getServiceById,
   createService,
   updateService,
-  deleteService
+  deleteService,
+  getMyServices
 } from "./serviceController";
 import { protect } from "../../middleware/authMiddleware";
 import { requireRole } from "../../middleware/roleMiddleware";
@@ -23,6 +24,7 @@ router.use(protect);
 router.use(requireRole("PROVIDER"));
 
 router.post("/", validate(createServiceSchema), createService);
+router.get("/my-services", getMyServices);
 router.put("/:id", validate(updateServiceSchema), updateService);
 router.delete("/:id", deleteService);
 

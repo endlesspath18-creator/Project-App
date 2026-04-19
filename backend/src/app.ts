@@ -9,6 +9,7 @@ import serviceRoutes from "./modules/services/serviceRoutes";
 import bookingRoutes from "./modules/bookings/bookingRoutes";
 import paymentRoutes from "./modules/payments/paymentRoutes";
 import reviewRoutes from "./modules/reviews/reviewRoutes";
+import providerRoutes from "./modules/provider/providerRoutes";
 
 const app: Application = express();
 
@@ -29,6 +30,7 @@ app.use(`${API_PREFIX}/services`, serviceRoutes);
 app.use(`${API_PREFIX}/bookings`, bookingRoutes);
 app.use(`${API_PREFIX}/payments`, paymentRoutes);
 app.use(`${API_PREFIX}/reviews`, reviewRoutes);
+app.use(`${API_PREFIX}/provider`, providerRoutes);
 
 // Fallback Middlewares
 app.use(notFound);

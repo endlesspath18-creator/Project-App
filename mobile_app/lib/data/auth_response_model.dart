@@ -25,8 +25,19 @@ class AuthResponse {
       extractedToken = dataMap['token'] ?? dataMap['accessToken'];
     }
 
+    // Extract user from possible locations in the response.
+    UserModel? extractedUser;
+    if (json['user'] != null) {
+      extractedUser = UserModel.fromJson(json['user']);
+    } else if (json['data'] != null && json['data'] is Map<String, dynamic>) {
+      final dataMap = json['data'] as Map<String, dynamic>;
+      if (dataMap['user'] != null) {
+        extractedUser = UserModel.fromJson(dataMap['user']);
+      }
+    }
+
     return AuthResponse(
-      user: json['user'] != null ? UserModel.fromJson(json['user']) : null,
+      user: extractedUser,
       token: extractedToken,
       message: json['message'],
       success: json['success'] ?? (extractedToken != null),

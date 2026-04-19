@@ -23,7 +23,7 @@ class UserModel {
       email: json['email'] ?? '',
       fullName: json['fullName'] ?? '',
       role: json['role'] ?? 'USER',
-      isRoleSet: json['isRoleSet'] ?? true,
+      isRoleSet: json['isRoleSet'] == true, // Strict boolean check, defaults to false if missing
       businessName: json['businessName'] ?? json['providerProfile']?['businessName'],
       phone: json['phone'],
     );

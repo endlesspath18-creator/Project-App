@@ -11,11 +11,19 @@ datasource db {
 enum Role {
   USER
   PROVIDER
+  ADMIN
+}
+
+enum ServiceStatus {
+  AVAILABLE
+  BUSY
+  DISABLED
 }
 
 enum BookingStatus {
   PENDING
   ACCEPTED
+  REJECTED
   IN_PROGRESS
   COMPLETED
   CANCELLED
@@ -40,8 +48,10 @@ model User {
   bookingsAsUser     Booking[] @relation("UserBookings")
   bookingsAsProvider Booking[] @relation("ProviderBookings")
   
-  reviewsAsUser     Review[] @relation("UserReviews")
-  reviewsAsProvider Review[] @relation("ProviderReviews")
+  reviewsAsUser      Review[] @relation("UserReviews")
+  reviewsAsProvider  Review[] @relation("ProviderReviews")
+  
+  notifications      Notification[]
 }
 
 model ProviderProfile {
@@ -52,42 +62,62 @@ model ProviderProfile {
   experienceYears Int?    @default(0)
   rating          Float   @default(0.0)
   totalJobs       Int     @default(0)
+  isOnline        Boolean @default(true)
   
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Service {
-  id              String   @id @default(uuid())
+  id              String        @id @default(uuid())
   providerId      String
   title           String
   category        String
   description     String
   price           Float
   durationMinutes Int
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
+  status          ServiceStatus @default(AVAILABLE)
+  isActive        Boolean       @default(true)
+  images          String[]      @default([])
+  rating          Float         @default(0.0)
+  totalJobs       Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   provider User      @relation(fields: [providerId], references: [id], onDelete: Cascade)
   bookings Booking[]
 }
 
 model Booking {
-  id          String        @id @default(uuid())
-  userId      String
-  providerId  String
-  serviceId   String
-  status      BookingStatus @default(PENDING)
-  bookingDate DateTime
-  address     String
-  totalAmount Float
-  createdAt   DateTime      @default(now())
+  id            String        @id @default(uuid())
+  userId        String
+  providerId    String
+  serviceId     String
+  status        BookingStatus @default(PENDING)
+  scheduledDate DateTime
+  address       String
+  notes         String?
+  totalAmount   Float
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
-  user     User      @relation("UserBookings", fields: [userId], references: [id])
-  provider User      @relation("ProviderBookings", fields: [providerId], references: [id])
-  service  Service   @relation(fields: [serviceId], references: [id])
+  user     User    @relation("UserBookings", fields: [userId], references: [id])
+  provider User    @relation("ProviderBookings", fields: [providerId], references: [id])
+  service  Service @relation(fields: [serviceId], references: [id])
   
   payment Payment?
   review  Review?
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  type      String?  // e.g., "BOOKING_UPDATE", "SYSTEM"
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Payment {

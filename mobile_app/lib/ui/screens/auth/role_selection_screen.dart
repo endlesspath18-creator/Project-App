@@ -5,7 +5,6 @@ import '../../../providers/auth_provider.dart';
 import '../../../core/app_routes.dart';
 import '../../../core/motion_utils.dart';
 import '../../../widgets/animated_background.dart';
-import '../../../widgets/auth_card.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});

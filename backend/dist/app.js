@@ -13,6 +13,7 @@ const serviceRoutes_1 = __importDefault(require("./modules/services/serviceRoute
 const bookingRoutes_1 = __importDefault(require("./modules/bookings/bookingRoutes"));
 const paymentRoutes_1 = __importDefault(require("./modules/payments/paymentRoutes"));
 const reviewRoutes_1 = __importDefault(require("./modules/reviews/reviewRoutes"));
+const providerRoutes_1 = __importDefault(require("./modules/provider/providerRoutes"));
 const app = (0, express_1.default)();
 // Global Middlewares
 app.use((0, cors_1.default)());
@@ -29,6 +30,7 @@ app.use(`${API_PREFIX}/services`, serviceRoutes_1.default);
 app.use(`${API_PREFIX}/bookings`, bookingRoutes_1.default);
 app.use(`${API_PREFIX}/payments`, paymentRoutes_1.default);
 app.use(`${API_PREFIX}/reviews`, reviewRoutes_1.default);
+app.use(`${API_PREFIX}/provider`, providerRoutes_1.default);
 // Fallback Middlewares
 app.use(notFound_1.notFound);
 app.use(errorMiddleware_1.errorHandler);

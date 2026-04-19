@@ -1,15 +1,28 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteService = exports.updateService = exports.createService = exports.getServiceById = exports.getServices = void 0;
+exports.deleteService = exports.getMyServices = exports.updateService = exports.createService = exports.getServiceById = exports.getServices = void 0;
 const db_1 = require("../../config/db");
 const response_1 = require("../../utils/response");
 const getServices = async (req, res) => {
-    const { category, providerId } = req.query;
-    const whereClause = { isActive: true };
+    const { category, providerId, searchQuery } = req.query;
+    const whereClause = {
+        isActive: true,
+    };
+    // If fetching for the general marketplace (no providerId), only show AVAILABLE services
+    if (!providerId) {
+        whereClause.status = "AVAILABLE";
+    }
+    else {
+        whereClause.providerId = String(providerId);
+    }
     if (category)
         whereClause.category = String(category);
-    if (providerId)
-        whereClause.providerId = String(providerId);
+    if (searchQuery) {
+        whereClause.OR = [
+            { title: { contains: String(searchQuery), mode: "insensitive" } },
+            { description: { contains: String(searchQuery), mode: "insensitive" } },
+        ];
+    }
     const services = await db_1.prisma.service.findMany({
         where: whereClause,
         include: {
@@ -21,6 +34,7 @@ const getServices = async (req, res) => {
                         select: {
                             businessName: true,
                             rating: true,
+                            isOnline: true,
                         }
                     }
                 }
@@ -52,7 +66,7 @@ const getServiceById = async (req, res) => {
 exports.getServiceById = getServiceById;
 const createService = async (req, res) => {
     const providerId = req.user.id;
-    const { title, category, description, price, durationMinutes } = req.body;
+    const { title, category, description, price, durationMinutes, images } = req.body;
     const newService = await db_1.prisma.service.create({
         data: {
             providerId,
@@ -61,6 +75,8 @@ const createService = async (req, res) => {
             description,
             price,
             durationMinutes,
+            images: images || [],
+            status: "AVAILABLE"
         }
     });
     (0, response_1.sendResponse)(res, 201, "Service created successfully", newService);
@@ -82,6 +98,15 @@ const updateService = async (req, res) => {
     (0, response_1.sendResponse)(res, 200, "Service updated successfully", updatedService);
 };
 exports.updateService = updateService;
+const getMyServices = async (req, res) => {
+    const providerId = req.user.id;
+    const services = await db_1.prisma.service.findMany({
+        where: { providerId },
+        orderBy: { createdAt: "desc" },
+    });
+    (0, response_1.sendResponse)(res, 200, "Provider services fetched", services);
+};
+exports.getMyServices = getMyServices;
 const deleteService = async (req, res) => {
     const providerId = req.user.id;
     const { id } = req.params;

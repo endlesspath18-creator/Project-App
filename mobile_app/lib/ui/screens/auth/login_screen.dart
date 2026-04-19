@@ -200,28 +200,37 @@ class _LoginScreenState extends State<LoginScreen> {
                             isLoading: auth.isLoading,
                             isAvailable: auth.isFirebaseAvailable,
                             onPressed: () async {
-                              final isRoleSet = await auth.signInWithGoogle();
-                              if (context.mounted) {
-                                if (isRoleSet) {
-                                  // Existing user with role
-                                  Navigator.of(context).pushReplacementNamed(
-                                    auth.isProvider ? AppRoutes.providerHome : AppRoutes.userHome,
-                                  );
-                                } else if (auth.user != null && !auth.user!.isRoleSet) {
-                                  // New user - needs role selection
-                                  Navigator.of(context).pushReplacementNamed(AppRoutes.roleSelection);
-                                } else if (auth.error != null) {
-                                  // Show error if something went wrong
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(auth.error!),
-                                      backgroundColor: Colors.redAccent,
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                    ),
-                                  );
-                                }
-                              }
+                               final isRoleSet = await auth.signInWithGoogle();
+                               
+                               if (context.mounted) {
+                                 if (auth.user != null) {
+                                   debugPrint('LOGIN_NAV: User is present. isRoleSet: ${auth.user!.isRoleSet}');
+                                   
+                                   if (auth.user!.isRoleSet) {
+                                     // Existing user with role -> Home
+                                     final route = auth.isProvider ? AppRoutes.providerHome : AppRoutes.userHome;
+                                     debugPrint('LOGIN_NAV: Navigating to Home route: $route');
+                                     Navigator.of(context).pushReplacementNamed(route);
+                                   } else {
+                                     // New user or role not set -> Role Selection
+                                     debugPrint('LOGIN_NAV: Navigating to Role Selection');
+                                     Navigator.of(context).pushReplacementNamed(AppRoutes.roleSelection);
+                                   }
+                                 } else if (auth.error != null) {
+                                   debugPrint('LOGIN_NAV: Sign-in failed with error: ${auth.error}');
+                                   // Show error if something went wrong
+                                   ScaffoldMessenger.of(context).showSnackBar(
+                                     SnackBar(
+                                       content: Text(auth.error!),
+                                       backgroundColor: Colors.redAccent,
+                                       behavior: SnackBarBehavior.floating,
+                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                     ),
+                                   );
+                                 } else {
+                                   debugPrint('LOGIN_NAV: Sign-in cancelled or failed silently');
+                                 }
+                               }
                             },
                           ),
                         ),

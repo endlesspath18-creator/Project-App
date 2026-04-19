@@ -46,14 +46,14 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
       final serviceProvider = context.read<ServiceProvider>();
 
       final newService = ServiceModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: '', // Backend generates ID
         title: _titleController.text.trim(),
         category: _selectedCategory,
         description: _descriptionController.text.trim(),
         price: double.parse(_priceController.text.trim()),
-        duration: _durationController.text.trim(),
-        providerId: authProvider.user?.id ?? 'temp-id',
-        providerName: authProvider.user?.fullName ?? 'Expert Provider',
+        durationMinutes: int.parse(_durationController.text.trim()),
+        providerId: authProvider.user?.id ?? '',
+        providerName: authProvider.user?.fullName ?? '',
       );
 
       final success = await serviceProvider.addService(newService);
@@ -200,7 +200,9 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                   delay: const Duration(milliseconds: 400),
                   child: Consumer<ServiceProvider>(
                     builder: (context, provider, _) => MotionUtils.tapScale(
-                      onTap: provider.isLoading ? null : _submitForm,
+                      onTap: () {
+                        if (!provider.isLoading) _submitForm();
+                      },
                       child: Container(
                         width: double.infinity,
                         height: 56,

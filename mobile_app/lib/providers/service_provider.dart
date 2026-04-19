@@ -19,19 +19,23 @@ class ServiceProvider extends ChangeNotifier {
   }
 
   // ─── Fetch All Services (Marketplace) ──────────────────────────────────────
-  Future<void> fetchAllServices() async {
+  Future<void> fetchAllServices({String? category, String? query}) async {
     _setLoading(true);
     _error = null;
     try {
-      final response = await ApiClient.get('/api/services');
-      if (response.isSuccess) {
-        final List<dynamic> data = response.data['services'] ?? [];
+      final queryParams = <String, String>{};
+      if (category != null && category != 'All') queryParams['category'] = category;
+      if (query != null && query.isNotEmpty) queryParams['searchQuery'] = query;
+
+      final uri = Uri(path: '/services', queryParameters: queryParams.isNotEmpty ? queryParams : null).toString();
+      
+      final response = await ApiClient.get(uri);
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['data'] ?? [];
         _services = data.map((s) => ServiceModel.fromJson(s as Map<String, dynamic>)).toList();
       }
     } catch (e) {
-      debugPrint('Error fetching services: $e. Using mock data.');
-      // MOCK FALLBACK
-      _services = _getMockServices();
+      _error = 'Failed to load services: $e';
     } finally {
       _setLoading(false);
     }
@@ -42,14 +46,13 @@ class ServiceProvider extends ChangeNotifier {
     _setLoading(true);
     _error = null;
     try {
-      final response = await ApiClient.get('/api/services/my-services');
-      if (response.isSuccess) {
-        final List<dynamic> data = response.data['services'] ?? [];
+      final response = await ApiClient.get('/services/my-services');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['data'] ?? [];
         _providerServices = data.map((s) => ServiceModel.fromJson(s as Map<String, dynamic>)).toList();
       }
     } catch (e) {
-      debugPrint('Error fetching provider services: $e.');
-      _providerServices = _services.where((s) => s.providerId == 'mock-id').toList();
+      _error = 'Failed to load your services: $e';
     } finally {
       _setLoading(false);
     }
@@ -59,66 +62,17 @@ class ServiceProvider extends ChangeNotifier {
   Future<bool> addService(ServiceModel service) async {
     _setLoading(true);
     try {
-      final response = await ApiClient.post('/api/services', service.toJson());
-      if (response.isSuccess) {
-        await fetchAllServices(); // Refresh local list
+      final response = await ApiClient.post('/services', service.toJson());
+      if (response.statusCode == 201) {
+        await fetchProviderServices(); // Refresh local provider list
         return true;
       }
       return false;
     } catch (e) {
-      debugPrint('Error adding service: $e. Simulating local success.');
-      // Simulate local success for demo if backend is missing
-      _services.insert(0, service);
-      _providerServices.insert(0, service);
-      notifyListeners();
-      return true;
+      debugPrint('Error adding service: $e');
+      return false;
     } finally {
       _setLoading(false);
     }
-  }
-
-  List<ServiceModel> _getMockServices() {
-    return [
-      ServiceModel(
-        id: '1',
-        title: 'Premium AC Deep Clean',
-        category: 'AC Repair',
-        description: 'Full jet wash and gas check for optimum cooling.',
-        price: 1499,
-        duration: '2 Hours',
-        providerId: 'p1',
-        providerName: 'Cooling Masters',
-      ),
-      ServiceModel(
-        id: '2',
-        title: 'Full Home Sanitization',
-        category: 'Cleaning',
-        description: 'Hospital-grade sanitization for your entire home.',
-        price: 2999,
-        duration: '4 Hours',
-        providerId: 'p2',
-        providerName: 'Cleanly Pro',
-      ),
-      ServiceModel(
-        id: '3',
-        title: 'Bathroom Leakage Fix',
-        category: 'Plumbing',
-        description: 'Professional fix for all your plumbing issues.',
-        price: 499,
-        duration: '1 Hour',
-        providerId: 'p3',
-        providerName: 'Relay Plumbers',
-      ),
-      ServiceModel(
-        id: '4',
-        title: 'Emergency Wiring Repair',
-        category: 'Electrical',
-        description: 'Complete inspection and fix of faulty wiring.',
-        price: 899,
-        duration: '1.5 Hours',
-        providerId: 'p4',
-        providerName: 'Sparky Experts',
-      ),
-    ];
   }
 }

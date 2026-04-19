@@ -3,11 +3,27 @@ import { prisma } from "../../config/db";
 import { sendResponse, sendError } from "../../utils/response";
 
 export const getServices = async (req: Request, res: Response) => {
-  const { category, providerId } = req.query;
+  const { category, providerId, searchQuery } = req.query;
 
-  const whereClause: any = { isActive: true };
+  const whereClause: any = { 
+    isActive: true,
+  };
+
+  // If fetching for the general marketplace (no providerId), only show AVAILABLE services
+  if (!providerId) {
+    whereClause.status = "AVAILABLE";
+  } else {
+    whereClause.providerId = String(providerId);
+  }
+
   if (category) whereClause.category = String(category);
-  if (providerId) whereClause.providerId = String(providerId);
+  
+  if (searchQuery) {
+    whereClause.OR = [
+      { title: { contains: String(searchQuery), mode: "insensitive" } },
+      { description: { contains: String(searchQuery), mode: "insensitive" } },
+    ];
+  }
 
   const services = await prisma.service.findMany({
     where: whereClause,
@@ -20,6 +36,7 @@ export const getServices = async (req: Request, res: Response) => {
             select: {
               businessName: true,
               rating: true,
+              isOnline: true,
             }
           }
         }
@@ -54,7 +71,7 @@ export const getServiceById = async (req: Request, res: Response) => {
 
 export const createService = async (req: Request, res: Response) => {
   const providerId = req.user!.id;
-  const { title, category, description, price, durationMinutes } = req.body;
+  const { title, category, description, price, durationMinutes, images } = req.body;
 
   const newService = await prisma.service.create({
     data: {
@@ -64,6 +81,8 @@ export const createService = async (req: Request, res: Response) => {
       description,
       price,
       durationMinutes,
+      images: images || [],
+      status: "AVAILABLE"
     }
   });
 
@@ -86,6 +105,17 @@ export const updateService = async (req: Request, res: Response) => {
   });
 
   sendResponse(res, 200, "Service updated successfully", updatedService);
+};
+
+export const getMyServices = async (req: Request, res: Response) => {
+  const providerId = req.user!.id;
+
+  const services = await prisma.service.findMany({
+    where: { providerId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  sendResponse(res, 200, "Provider services fetched", services);
 };
 
 export const deleteService = async (req: Request, res: Response) => {

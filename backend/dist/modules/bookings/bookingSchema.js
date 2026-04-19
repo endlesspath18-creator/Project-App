@@ -5,8 +5,9 @@ const zod_1 = require("zod");
 exports.createBookingSchema = zod_1.z.object({
     body: zod_1.z.object({
         serviceId: zod_1.z.string().uuid("Invalid service ID"),
-        bookingDate: zod_1.z.string().datetime("Invalid ISO date string"),
+        scheduledDate: zod_1.z.string().datetime("Invalid ISO date string"),
         address: zod_1.z.string().min(5, "Address must be at least 5 characters"),
+        notes: zod_1.z.string().max(500, "Notes are too long").optional(),
     })
 });
 // Providers updating status

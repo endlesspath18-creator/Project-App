@@ -3,11 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:animate_do/animate_do.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/service_provider.dart';
+import '../../../providers/booking_provider.dart';
+import '../../../providers/dashboard_provider.dart';
 import '../../../core/app_routes.dart';
 import '../../../core/motion_utils.dart';
 import '../../../widgets/animated_background.dart';
 import '../../../widgets/auth_card.dart';
-import '../../../data/service_model.dart';
 
 class ProviderHomeScreen extends StatefulWidget {
   const ProviderHomeScreen({super.key});
@@ -21,22 +22,36 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ServiceProvider>().fetchProviderServices();
+      _loadData();
     });
   }
 
+  Future<void> _loadData() async {
+    final serviceProv = context.read<ServiceProvider>();
+    final bookingProv = context.read<BookingProvider>();
+    final dashProv = context.read<DashboardProvider>();
+
+    await Future.wait([
+      serviceProv.fetchProviderServices(),
+      bookingProv.fetchProviderRequests(),
+      bookingProv.fetchActiveJobs(),
+      dashProv.fetchStats(),
+    ]);
+  }
+
   Future<void> _handleRefresh() async {
-    await context.read<ServiceProvider>().fetchProviderServices();
+    await _loadData();
   }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final serviceProvider = Provider.of<ServiceProvider>(context);
+    final dashProvider = Provider.of<DashboardProvider>(context);
+    final bookingProvider = Provider.of<BookingProvider>(context);
     final user = authProvider.user;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: AnimatedBackground(
         child: SafeArea(
           child: RefreshIndicator(
@@ -44,7 +59,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
             color: Theme.of(context).primaryColor,
             child: CustomScrollView(
               slivers: [
-                // ─── Header ──────────────────────────────────────────────────
+                // ─── Header & Profile ────────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(24.0),
@@ -56,7 +71,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Business Console',
+                                'Business Dashboard',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -66,7 +81,7 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                user?.businessName ?? user?.fullName ?? 'Provider',
+                                user?.businessName ?? user?.fullName ?? 'Service Expert',
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -77,22 +92,12 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
                           ),
                         ),
                         FadeInRight(
-                          child: MotionUtils.tapScale(
-                            onTap: () async {
-                              await authProvider.logout();
-                              if (context.mounted) {
-                                Navigator.of(context).pushReplacementNamed(AppRoutes.login);
-                              }
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-                              ),
-                              child: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 22),
-                            ),
+                          child: Row(
+                            children: [
+                              _buildStatusToggle(dashProvider),
+                              const SizedBox(width: 12),
+                              _buildLogoutButton(authProvider),
+                            ],
                           ),
                         ),
                       ],
@@ -100,510 +105,398 @@ class _ProviderHomeScreenState extends State<ProviderHomeScreen> {
                   ),
                 ),
 
-                // ─── Stats Grid ──────────────────────────────────────────────
+                // ─── Earnings & Stats ────────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 1.5,
-                      children: [
-                        _StatCard('₹24,500', 'Total Earnings', Icons.payments_rounded, Colors.green),
-                        _StatCard('12', 'Active Jobs', Icons.assignment_turned_in_rounded, Colors.blue),
-                        _StatCard('4.9', 'Rating', Icons.star_rounded, Colors.orange),
-                        _StatCard('128', 'Profile Views', Icons.remove_red_eye_rounded, Colors.purple),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // ─── Add Service CTA ────────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: FadeInUp(
-                      child: MotionUtils.tapScale(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const AddServiceScreen()),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Theme.of(context).primaryColor, const Color(0xFF1D4ED8)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
+                    child: dashProvider.isLoading && dashProvider.stats == null
+                      ? _buildShimmerStats()
+                      : FadeInUp(
+                          child: Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  shape: BoxShape.circle,
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF1E293B).withValues(alpha: 0.2),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
                                 ),
-                                child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
-                              ),
-                              const SizedBox(width: 20),
-                              const Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                      'Add New Service',
-                                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                                    ),
-                                    Text(
-                                      'Reach more customers today',
-                                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                                    const Text('Estimated Earnings', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Text('Live', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
                                     ),
                                   ],
                                 ),
-                              ),
-                              const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
-                            ],
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Text(
+                                      '₹${dashProvider.stats?.earnings.toInt() ?? 0}',
+                                      style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                                    ),
+                                    const Spacer(),
+                                    const Icon(Icons.trending_up, color: Colors.green, size: 24),
+                                  ],
+                                ),
+                                const SizedBox(height: 24),
+                                const Divider(color: Colors.white10),
+                                const SizedBox(height: 20),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    _buildSmallStat('Completed', '${dashProvider.stats?.completedJobs ?? 0}', Icons.check_circle_outline),
+                                    _buildSmallStat('Rating', '${dashProvider.stats?.rating ?? 0.0}', Icons.star_outline),
+                                    _buildSmallStat('Pending', '${dashProvider.stats?.pendingRequests ?? 0}', Icons.hourglass_empty),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ),
                   ),
                 ),
 
-                // ─── My Services Label ──────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'My Services',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          child: const Text('Manage', style: TextStyle(fontWeight: FontWeight.w600)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // ─── Services List ──────────────────────────────────────────
-                if (serviceProvider.isLoading)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (serviceProvider.providerServices.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(40.0),
-                      child: Column(
-                        children: [
-                          Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.shade300),
-                          const SizedBox(height: 16),
-                          const Text('No services listed yet.', style: TextStyle(color: Colors.grey)),
-                        ],
-                      ),
-                    ),
-                  )
+                // ─── Incoming Requests ──────────────────────────────────────
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                _buildSectionHeader('New Requests', bookingProvider.incomingRequests.length),
+                
+                if (bookingProvider.isLoading && bookingProvider.incomingRequests.isEmpty)
+                  const SliverToBoxAdapter(child: Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator())))
+                else if (bookingProvider.incomingRequests.isEmpty)
+                  _buildEmptyState('No new requests right now.', Icons.notifications_none_rounded)
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => _RequestCard(
+                          booking: bookingProvider.incomingRequests[index],
+                          onAccept: () => _handleStatusUpdate(bookingProvider.incomingRequests[index]['id'], 'accept'),
+                          onReject: () => _handleStatusUpdate(bookingProvider.incomingRequests[index]['id'], 'reject'),
+                        ),
+                        childCount: bookingProvider.incomingRequests.length,
+                      ),
+                    ),
+                  ),
+
+                // ─── Active Jobs ────────────────────────────────────────────
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                _buildSectionHeader('Active Jobs', bookingProvider.providerBookings.length),
+
+                if (bookingProvider.providerBookings.isEmpty)
+                  _buildEmptyState('No jobs in progress.', Icons.work_outline_rounded)
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
-                          final service = serviceProvider.providerServices[index];
-                          return FadeInUp(
-                            delay: Duration(milliseconds: 100 * index),
-                            child: _ProviderServiceCard(service: service),
+                          final job = bookingProvider.providerBookings[index];
+                          return _ActiveJobCard(
+                            job: job,
+                            onStart: () => _handleStatusUpdate(job['id'], 'start'),
+                            onComplete: () => _handleStatusUpdate(job['id'], 'complete'),
                           );
                         },
-                        childCount: serviceProvider.providerServices.length,
+                        childCount: bookingProvider.providerBookings.length,
                       ),
                     ),
                   ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 40)),
               ],
             ),
           ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.pushNamed(context, AppRoutes.addService),
+        backgroundColor: const Color(0xFF1E293B),
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        label: const Text('New Service', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, int count) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
+        child: Row(
+          children: [
+            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+            const SizedBox(width: 8),
+            if (count > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(color: const Color(0xFF2563EB), borderRadius: BorderRadius.circular(10)),
+                child: Text('$count', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String message, IconData icon) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.all(40.0),
+        child: Column(
+          children: [
+            Icon(icon, size: 48, color: Colors.grey[300]),
+            const SizedBox(height: 12),
+            Text(message, style: TextStyle(color: Colors.grey[400], fontSize: 13)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSmallStat(String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.white38, size: 16),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(color: Colors.white38, fontSize: 10)),
+      ],
+    );
+  }
+
+  Widget _buildStatusToggle(DashboardProvider dashProv) {
+    final isOnline = dashProv.stats?.isOnline ?? true;
+    return MotionUtils.tapScale(
+      onTap: () => dashProv.toggleOnline(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isOnline ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: (isOnline ? Colors.green : Colors.red).withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(radius: 4, backgroundColor: isOnline ? Colors.green : Colors.red),
+            const SizedBox(width: 6),
+            Text(
+              isOnline ? 'Online' : 'Offline',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isOnline ? Colors.green : Colors.red),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton(AuthProvider auth) {
+    return MotionUtils.tapScale(
+      onTap: () async {
+        await auth.logout();
+        if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.login);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.black12)),
+        child: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 20),
+      ),
+    );
+  }
+
+  Widget _buildShimmerStats() {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(24)),
+    );
+  }
+
+  Future<void> _handleStatusUpdate(String id, String action) async {
+    final success = await context.read<BookingProvider>().updateStatus(id, action);
+    if (success && mounted) {
+      await context.read<DashboardProvider>().fetchStats();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Job updated: $action')));
+    }
+  }
+}
+
+class _RequestCard extends StatelessWidget {
+  final dynamic booking;
+  final VoidCallback onAccept;
+  final VoidCallback onReject;
+
+  const _RequestCard({required this.booking, required this.onAccept, required this.onReject});
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeInRight(
+      child: AuthCard(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                CircleAvatar(backgroundColor: Colors.blue[50], child: const Icon(Icons.person, color: Colors.blue)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(booking['user']['fullName'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(booking['service']['title'], style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+                    ],
+                  ),
+                ),
+                Text('₹${booking['totalAmount']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
+                Expanded(child: Text(booking['address'], style: const TextStyle(color: Colors.grey, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis)),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onReject,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.redAccent),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Reject'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: onAccept,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Accept Request'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _StatCard extends StatelessWidget {
-  final String value;
-  final String label;
-  final IconData icon;
-  final Color color;
+class _ActiveJobCard extends StatelessWidget {
+  final dynamic job;
+  final VoidCallback onStart;
+  final VoidCallback onComplete;
 
-  const _StatCard(this.value, this.label, this.icon, this.color);
+  const _ActiveJobCard({required this.job, required this.onStart, required this.onComplete});
 
   @override
   Widget build(BuildContext context) {
-    return FadeInDown(
+    final bool isAccepted = job['status'] == 'ACCEPTED';
+    
+    return FadeInUp(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
-          ],
+          border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.1)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-                Icon(icon, color: color.withValues(alpha: 0.8), size: 20),
-              ],
-            ),
-            Text(label, style: const TextStyle(fontSize: 12, color: Colors.black54)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ProviderServiceCard extends StatelessWidget {
-  final ServiceModel service;
-
-  const _ProviderServiceCard({required this.service});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: AuthCard(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                _getCategoryIcon(service.category),
-                color: Theme.of(context).primaryColor,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Row(
                 children: [
-                  Text(
-                    service.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1E293B)),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(12)),
+                    child: const Icon(Icons.engineering_rounded, color: Color(0xFF2563EB), size: 24),
                   ),
-                  const SizedBox(height: 4),
-                  Text('₹${service.price.toInt()} • ${service.duration}', style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(job['service']['title'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text('Customer: ${job['user']['fullName']}', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  _buildStatusChip(job['status']),
                 ],
               ),
-            ),
-            const Icon(Icons.more_vert_rounded, color: Colors.grey),
-          ],
-        ),
-      ),
-    );
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category) {
-      case 'AC Repair': return Icons.ac_unit_rounded;
-      case 'Plumbing': return Icons.plumbing_rounded;
-      case 'Electrical': return Icons.electrical_services_rounded;
-      case 'Cleaning': return Icons.cleaning_services_rounded;
-      default: return Icons.settings_suggest_rounded;
-    }
-  }
-}
-
-class AddServiceScreen extends StatefulWidget {
-  const AddServiceScreen({super.key});
-
-  @override
-  State<AddServiceScreen> createState() => _AddServiceScreenState();
-}
-
-class _AddServiceScreenState extends State<AddServiceScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _priceController = TextEditingController();
-  final _durationController = TextEditingController();
-  
-  String _selectedCategory = 'AC Repair';
-  final List<String> _categories = [
-    'AC Repair',
-    'Plumbing',
-    'Electrical',
-    'Cleaning',
-    'Appliance Repair',
-    'Mechanical Works'
-  ];
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    _priceController.dispose();
-    _durationController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      final authProvider = context.read<AuthProvider>();
-      final serviceProvider = context.read<ServiceProvider>();
-
-      final newService = ServiceModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: _titleController.text.trim(),
-        category: _selectedCategory,
-        description: _descriptionController.text.trim(),
-        price: double.parse(_priceController.text.trim()),
-        duration: _durationController.text.trim(),
-        providerId: authProvider.user?.id ?? 'temp-id',
-        providerName: authProvider.user?.fullName ?? 'Expert Provider',
-      );
-
-      final success = await serviceProvider.addService(newService);
-
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Service added successfully! 🎉')),
-        );
-        Navigator.pop(context);
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to add service. Please try again.')),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text('Add New Service', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FadeInDown(
-                  child: AuthCard(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Service Details',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 24),
-                        
-                        _buildLabel('Service Title'),
-                        TextFormField(
-                          controller: _titleController,
-                          decoration: _buildInputDecoration('e.g. Split AC Maintenance'),
-                          validator: (v) => v!.isEmpty ? 'Please enter a title' : null,
-                        ),
-                        
-                        const SizedBox(height: 20),
-                        
-                        _buildLabel('Category'),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _selectedCategory,
-                              isExpanded: true,
-                              items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                              onChanged: (v) => setState(() => _selectedCategory = v!),
-                            ),
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 20),
-                        
-                        _buildLabel('Description'),
-                        TextFormField(
-                          controller: _descriptionController,
-                          maxLines: 3,
-                          decoration: _buildInputDecoration('Describe what is included in the service...'),
-                          validator: (v) => v!.isEmpty ? 'Please enter a description' : null,
-                        ),
-                      ],
+              const SizedBox(height: 20),
+              if (isAccepted)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onStart,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
+                    child: const Text('Start Work'),
+                  ),
+                )
+              else
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onComplete,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Mark as Completed'),
                   ),
                 ),
-                
-                const SizedBox(height: 24),
-
-                FadeInDown(
-                  delay: const Duration(milliseconds: 200),
-                  child: AuthCard(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Pricing & Duration',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 24),
-                        
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildLabel('Price (₹)'),
-                                  TextFormField(
-                                    controller: _priceController,
-                                    keyboardType: TextInputType.number,
-                                    decoration: _buildInputDecoration('999'),
-                                    validator: (v) => v!.isEmpty ? 'Required' : null,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildLabel('Duration'),
-                                  TextFormField(
-                                    controller: _durationController,
-                                    decoration: _buildInputDecoration('2 Hours'),
-                                    validator: (v) => v!.isEmpty ? 'Required' : null,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 48),
-
-                FadeInUp(
-                  delay: const Duration(milliseconds: 400),
-                  child: Consumer<ServiceProvider>(
-                    builder: (context, provider, _) => MotionUtils.tapScale(
-                      onTap: () {
-                        if (!provider.isLoading) _submitForm();
-                      },
-                      child: Container(
-                        width: double.infinity,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
-                              blurRadius: 15,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: provider.isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text(
-                                'List Service Now',
-                                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 40),
-              ],
-            ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
-      ),
-    );
-  }
-
-  InputDecoration _buildInputDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(fontSize: 14, color: Colors.black26),
-      filled: true,
-      fillColor: Colors.grey.shade50,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.05)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.05)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  Widget _buildStatusChip(String status) {
+    final Color color = status == 'ACCEPTED' ? Colors.blue : Colors.orange;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+      child: Text(status, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color)),
     );
   }
 }

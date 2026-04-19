@@ -7,6 +7,8 @@ import 'core/app_routes.dart';
 import 'core/constants.dart';
 import 'providers/auth_provider.dart';
 import 'providers/service_provider.dart';
+import 'providers/booking_provider.dart';
+import 'providers/dashboard_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +20,7 @@ void main() async {
     isFirebaseReady = true;
   } catch (e) {
     // Only log in debug/development; avoid crashing the app
-    debugPrint('Firebase initialization failed: $e. Google Sign-In will be disabled.');
+    debugPrint('Firebase initialization failed: \$e. Google Sign-In will be disabled.');
   }
 
   runApp(MyApp(isFirebaseReady: isFirebaseReady));
@@ -34,6 +36,8 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider(isFirebaseAvailable: isFirebaseReady)),
         ChangeNotifierProvider(create: (_) => ServiceProvider()),
+        ChangeNotifierProvider(create: (_) => BookingProvider()),
+        ChangeNotifierProvider(create: (_) => DashboardProvider()),
       ],
       child: MaterialApp(
         title: AppConstants.appName,
