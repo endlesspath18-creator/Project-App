@@ -10,17 +10,17 @@ import 'package:mobile_app/providers/service_provider.dart';
 import 'package:mobile_app/providers/booking_provider.dart';
 import 'package:mobile_app/providers/dashboard_provider.dart';
 
+import 'package:mobile_app/features/auth/ui/auth_wrapper.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   bool isFirebaseReady = false;
   try {
-    // Attempt to initialize Firebase
     await Firebase.initializeApp();
     isFirebaseReady = true;
   } catch (e) {
-    // Only log in debug/development; avoid crashing the app
-    debugPrint('Firebase initialization failed: \$e. Google Sign-In will be disabled.');
+    debugPrint('Firebase initialization failed: $e');
   }
 
   runApp(MyApp(isFirebaseReady: isFirebaseReady));
@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
         title: AppConstants.appName,
         theme: AppTheme.light,
         themeMode: ThemeMode.light,
-        initialRoute: AppRoutes.splash,
+        home: const AuthWrapper(),
         routes: AppRoutes.getRoutes(),
         debugShowCheckedModeBanner: false,
       ),

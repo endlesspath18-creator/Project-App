@@ -10,16 +10,17 @@ class AuthProvider extends ChangeNotifier {
   final bool isFirebaseAvailable;
   UserModel? _user;
   bool _isLoading = false;
+  bool _isInitialized = false;
   String? _error;
 
   AuthProvider({this.isFirebaseAvailable = false});
 
   UserModel? get user => _user;
   bool get isLoading => _isLoading;
+  bool get isInitialized => _isInitialized;
   String? get error => _error;
   bool get isAuthenticated => _user != null;
   bool get isProvider => _user?.role == 'PROVIDER';
-
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -32,14 +33,14 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ─── Session Check ─────────────────────────────────────────────────────────
-  Future<bool> checkAuthStatus() async {
-    _setLoading(true);
+  Future<void> checkAuthStatus() async {
     _setError(null);
     try {
       final token = await StorageService.getToken();
       if (token == null || token.isEmpty) {
-        _setLoading(false);
-        return false;
+        _isInitialized = true;
+        notifyListeners();
+        return;
       }
 
       final response = await ApiClient.get(AppConstants.verifyMeEndpoint);
@@ -49,23 +50,16 @@ class AuthProvider extends ChangeNotifier {
       } else {
         rawUser = response.data['user'] ?? response.data;
       }
-      debugPrint('SESSION_RESTORE: Received raw user data: $rawUser');
       
       _user = UserModel.fromJson(rawUser);
-      debugPrint('SESSION_RESTORE: Parsed user. isRoleSet: ${_user?.isRoleSet}');
-      
-      _setLoading(false);
-      return true;
-    } on UnauthorizedException {
-      await StorageService.deleteToken();
-      _setLoading(false);
-      return false;
-    } on ApiException catch (e) {
-      // Do NOT delete token on generic network/server errors (500, 502, etc.)
-      // returning false will still go to login/welcome, but token stays for retry.
-      _setError(e.message);
-      _setLoading(false);
-      return false;
+    } catch (e) {
+      debugPrint('AUTH_CHECK_ERROR: $e');
+      if (e is UnauthorizedException) {
+        await StorageService.deleteToken();
+      }
+    } finally {
+      _isInitialized = true;
+      notifyListeners();
     }
   }
 
@@ -133,7 +127,6 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
   }
-
 
   // ─── Logout ────────────────────────────────────────────────────────────────
   Future<void> logout() async {

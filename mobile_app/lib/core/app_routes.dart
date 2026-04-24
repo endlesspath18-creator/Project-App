@@ -48,7 +48,6 @@ class AppRoutes {
 
   static Map<String, WidgetBuilder> getRoutes() {
     return {
-      splash: (context) => const SplashScreen(),
       welcome: (context) => const WelcomeScreen(),
       login: (context) => const LoginScreen(),
       signup: (context) => const SignupScreen(),

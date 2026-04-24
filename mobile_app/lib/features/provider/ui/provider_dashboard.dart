@@ -45,19 +45,28 @@ class _ProviderDashboardState extends State<ProviderDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) => setState(() => _currentIndex = index),
-        children: _pages,
+    return PopScope(
+      canPop: _currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_currentIndex != 0) {
+          _onTabTapped(0);
+        }
+      },
+      child: Scaffold(
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: (index) => setState(() => _currentIndex = index),
+          children: _pages,
+        ),
+        bottomNavigationBar: _buildBottomNav(context),
+        floatingActionButton: _currentIndex == 1 ? FloatingActionButton.extended(
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.addService),
+          backgroundColor: AppColors.primary,
+          icon: const Icon(Icons.add_rounded, color: Colors.white),
+          label: const Text("Add Service", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ) : null,
       ),
-      bottomNavigationBar: _buildBottomNav(context),
-      floatingActionButton: _currentIndex == 1 ? FloatingActionButton.extended(
-        onPressed: () => Navigator.pushNamed(context, AppRoutes.addService),
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text("Add Service", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-      ) : null,
     );
   }
 
