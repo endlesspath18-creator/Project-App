@@ -151,7 +151,7 @@ class _BookingScreenState extends State<BookingScreen> {
       }
 
       // Step 3: Open Razorpay Checkout
-      var options = {
+      final options = {
         'key': orderData['key'],
         'amount': (orderData['amount'] * 100).toInt(), // amount in paise
         'name': 'EndlessPath Services',
@@ -166,10 +166,17 @@ class _BookingScreenState extends State<BookingScreen> {
         }
       };
 
+      debugPrint("[Razorpay] Opening checkout with: $options");
+
       try {
+        if (options['key'] == null || options['key'].isEmpty) {
+          _showSnackBar("Razorpay Key is missing! Check backend ENV.", isError: true);
+          return;
+        }
         _razorpay.open(options);
       } catch (e) {
         debugPrint('Razorpay Error: $e');
+        _showSnackBar("SDK Error: $e", isError: true);
       }
     }
   }
