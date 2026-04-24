@@ -61,7 +61,8 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
       return false;
     } on ApiException catch (e) {
-      await StorageService.deleteToken();
+      // Do NOT delete token on generic network/server errors (500, 502, etc.)
+      // returning false will still go to login/welcome, but token stays for retry.
       _setError(e.message);
       _setLoading(false);
       return false;

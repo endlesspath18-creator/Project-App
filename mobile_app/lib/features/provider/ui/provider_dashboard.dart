@@ -325,8 +325,8 @@ class _JobsManageTabState extends State<_JobsManageTab> with SingleTickerProvide
         controller: _tabController,
         children: const [
           _RequestListView(),
-          PlaceholderScreen(title: "Active Jobs"),
-          PlaceholderScreen(title: "Job History"),
+          _ActiveJobListView(),
+          _HistoryListView(),
         ],
       ),
     );
@@ -339,12 +339,74 @@ class _RequestListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
      final bookingProvider = Provider.of<BookingProvider>(context);
-     if (bookingProvider.incomingRequests.isEmpty) return const Center(child: Text("No pending requests"));
+     final requests = bookingProvider.pendingRequests;
+     
+     if (requests.isEmpty) {
+       return Center(
+         child: Column(
+           mainAxisAlignment: MainAxisAlignment.center,
+           children: [
+             Opacity(opacity: 0.5, child: Icon(Icons.notifications_paused_rounded, size: 64, color: AppColors.textTertiary)),
+             const SizedBox(height: 16),
+             const Text("No pending requests", style: TextStyle(color: AppColors.textSecondary)),
+           ],
+         ),
+       );
+     }
      
      return ListView.builder(
        padding: const EdgeInsets.all(24),
-       itemCount: bookingProvider.incomingRequests.length,
-       itemBuilder: (context, index) => _FullJobCard(booking: bookingProvider.incomingRequests[index]),
+       itemCount: requests.length,
+       itemBuilder: (context, index) => _FullJobCard(booking: requests[index]),
+     );
+  }
+}
+
+class _ActiveJobListView extends StatelessWidget {
+  const _ActiveJobListView();
+
+  @override
+  Widget build(BuildContext context) {
+     final bookingProvider = Provider.of<BookingProvider>(context);
+     final jobs = bookingProvider.activeJobsList;
+     
+     if (jobs.isEmpty) {
+       return Center(
+         child: Column(
+           mainAxisAlignment: MainAxisAlignment.center,
+           children: [
+             Opacity(opacity: 0.5, child: Icon(Icons.business_center_outlined, size: 64, color: AppColors.textTertiary)),
+             const SizedBox(height: 16),
+             const Text("No active jobs", style: TextStyle(color: AppColors.textSecondary)),
+           ],
+         ),
+       );
+     }
+     
+     return ListView.builder(
+       padding: const EdgeInsets.all(24),
+       itemCount: jobs.length,
+       itemBuilder: (context, index) => _FullJobCard(booking: jobs[index]),
+     );
+  }
+}
+
+class _HistoryListView extends StatelessWidget {
+  const _HistoryListView();
+
+  @override
+  Widget build(BuildContext context) {
+     final bookingProvider = Provider.of<BookingProvider>(context);
+     final history = bookingProvider.jobHistoryList;
+     
+     if (history.isEmpty) {
+       return const Center(child: Text("No job history", style: TextStyle(color: AppColors.textSecondary)));
+     }
+     
+     return ListView.builder(
+       padding: const EdgeInsets.all(24),
+       itemCount: history.length,
+       itemBuilder: (context, index) => _FullJobCard(booking: history[index]),
      );
   }
 }
@@ -525,38 +587,73 @@ class _FullJobCard extends StatelessWidget {
               Icon(method == 'COD' ? Icons.money : Icons.account_balance_wallet, size: 14, color: AppColors.textTertiary),
               Text(" $method", style: const TextStyle(color: AppColors.textTertiary, fontSize: 12)),
               const Spacer(),
-              Text(booking['status'] ?? 'PENDING', style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: GlassButton(
-                  onPressed: () async {
-                    final success = await Provider.of<BookingProvider>(context, listen: false).updateStatus(booking['id'], 'reject');
-                    if (success && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Booking rejected")));
-                    }
-                  }, 
-                  text: "Reject", 
-                  isPrimary: false
-                )
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GlassButton(
-                  onPressed: () async {
-                    final success = await Provider.of<BookingProvider>(context, listen: false).updateStatus(booking['id'], 'accept');
-                    if (success && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Booking accepted! 🎉"), backgroundColor: Colors.green));
-                    }
-                  }, 
-                  text: "Accept"
-                )
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  booking['status'] ?? 'PENDING', 
+                  style: const TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold)
+                ),
               ),
             ],
           ),
+          
+          if (booking['status'] == 'PENDING') ...[
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: GlassButton(
+                    onPressed: () async {
+                      final success = await Provider.of<BookingProvider>(context, listen: false).updateStatus(booking['id'], 'reject');
+                      if (success && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Booking rejected")));
+                      }
+                    }, 
+                    text: "Reject", 
+                    isPrimary: false
+                  )
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GlassButton(
+                    onPressed: () async {
+                      final success = await Provider.of<BookingProvider>(context, listen: false).updateStatus(booking['id'], 'accept');
+                      if (success && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Booking accepted! 🎉"), backgroundColor: Colors.green));
+                      }
+                    }, 
+                    text: "Accept"
+                  )
+                ),
+              ],
+            ),
+          ] else if (booking['status'] == 'ACCEPTED') ...[
+            const SizedBox(height: 20),
+            GlassButton(
+               onPressed: () async {
+                  final success = await Provider.of<BookingProvider>(context, listen: false).updateStatus(booking['id'], 'start');
+                  if (success && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Job started!"), backgroundColor: Colors.orange));
+                  }
+               },
+               text: "Start Job",
+            ),
+          ] else if (booking['status'] == 'IN_PROGRESS') ...[
+            const SizedBox(height: 20),
+            GlassButton(
+               onPressed: () async {
+                  final success = await Provider.of<BookingProvider>(context, listen: false).updateStatus(booking['id'], 'complete');
+                  if (success && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Job marked as completed!"), backgroundColor: Colors.blue));
+                  }
+               },
+               text: "Mark as Completed",
+            ),
+          ],
         ],
       ),
     );

@@ -13,6 +13,11 @@ class BookingProvider with ChangeNotifier {
   List<dynamic> get userBookings => _userBookings;
   List<dynamic> get providerBookings => _providerBookings;
   List<dynamic> get incomingRequests => _incomingRequests;
+
+  List<dynamic> get pendingRequests => _incomingRequests.where((b) => b['status'] == 'PENDING').toList();
+  List<dynamic> get activeJobsList => _providerBookings.where((b) => b['status'] == 'ACCEPTED' || b['status'] == 'IN_PROGRESS').toList();
+  List<dynamic> get jobHistoryList => _providerBookings.where((b) => b['status'] == 'COMPLETED' || b['status'] == 'CANCELLED' || b['status'] == 'REJECTED').toList();
+
   bool get isLoading => _isLoading;
   String? get error => _error;
 
