@@ -64,8 +64,13 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
-  const user = await prisma.user.findUnique({
-    where: { email },
+  const user = await prisma.user.findFirst({
+    where: { 
+      OR: [
+        { email },
+        { phone: email }
+      ]
+    },
     include: {
       providerProfile: true,
     },

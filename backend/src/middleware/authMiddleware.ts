@@ -40,6 +40,10 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
       return sendError(res, 403, "User account is deactivated");
     }
 
+    if (decoded.role && decoded.role !== user.role) {
+      return sendError(res, 401, "Role mismatch, please login again");
+    }
+
     req.user = decoded;
     next();
   } catch (error) {

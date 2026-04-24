@@ -121,12 +121,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                   controller: _emailController,
                                   keyboardType: TextInputType.emailAddress,
                                   decoration: const InputDecoration(
-                                    labelText: 'Email Address',
-                                    prefixIcon: Icon(Icons.email_outlined),
+                                    labelText: 'Email or Phone',
+                                    prefixIcon: Icon(Icons.person_outline),
                                   ),
                                   validator: (value) {
-                                    if (value == null || value.isEmpty) return 'Email is required';
-                                    if (!value.contains('@')) return 'Invalid email format';
+                                    if (value == null || value.isEmpty) return 'Email or Phone is required';
                                     return null;
                                   },
                                 ),

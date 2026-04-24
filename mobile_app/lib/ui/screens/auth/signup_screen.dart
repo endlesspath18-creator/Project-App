@@ -20,17 +20,20 @@ class _SignupScreenState extends State<SignupScreen> {
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _businessNameController = TextEditingController();
   final _phoneController = TextEditingController();
   
   String _selectedRole = 'USER';
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
     _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _businessNameController.dispose();
     _phoneController.dispose();
     super.dispose();
@@ -205,6 +208,24 @@ class _SignupScreenState extends State<SignupScreen> {
                                     ),
                                   ),
                                   validator: (value) => value != null && value.length < 6 ? 'Min 6 characters' : null,
+                                ),
+                                const SizedBox(height: 16),
+                                TextFormField(
+                                  controller: _confirmPasswordController,
+                                  obscureText: _obscureConfirmPassword,
+                                  decoration: InputDecoration(
+                                    labelText: 'Confirm Password',
+                                    prefixIcon: const Icon(Icons.lock_outline),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
+                                      onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                                    ),
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) return 'Confirm Password is required';
+                                    if (value != _passwordController.text) return 'Passwords do not match';
+                                    return null;
+                                  },
                                 ),
                                 
                                 const SizedBox(height: 32),
