@@ -87,7 +87,7 @@ class BookingProvider with ChangeNotifier {
     try {
       final response = await ApiClient.post('/api/bookings', {
         'serviceId': serviceId,
-        'scheduledDate': scheduledDate.toIso8601String(),
+        'scheduledDate': scheduledDate.toUtc().toIso8601String(),
         'address': address,
         'notes': notes,
         'paymentMethod': paymentMethod,
