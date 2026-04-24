@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Brand Color
-  static const Color primary = Color(0xFFBAE6D8);
-  static const Color primaryLight = Color(0xFFE2F5EE);
-  static const Color primaryDark = Color(0xFF8BBFA9);
-  static const Color primaryContainer = Color(0xFFE2F5EE);
+  static const Color primary = Color(0xFFE04000);
+  static const Color primaryLight = Color(0xFFFFF0EB);
+  static const Color primaryDark = Color(0xFFB33300);
+  static const Color primaryContainer = Color(0xFFFFF0EB);
   
   // Base Colors
-  static const Color background = Color(0xFFF7FBFA);
+  static const Color background = Color(0xFFFDF9F8);
   static const Color surface = Colors.white;
-  static const Color surfaceVariant = Color(0xFFEFF7F4);
+  static const Color surfaceVariant = Color(0xFFFBECE8);
   
   // Text Colors
   static const Color textPrimary = Color(0xFF1E293B);
@@ -19,9 +19,9 @@ class AppColors {
   
   // Interaction Colors
   static const Color secondary = Color(0xFF475569); 
-  static const Color tertiary = Color(0xFF0D9488);  
-  static const Color error = Color(0xFFE11D48);
-  static const Color warning = Color(0xFFD97706);
+  static const Color tertiary = Color(0xFFC2410C);  
+  static const Color error = Color(0xFFDC2626);
+  static const Color warning = Color(0xFFEA580C);
   
   // Grays / Borders
   static const Color border = Color(0xFFE2E8F0);
@@ -29,7 +29,7 @@ class AppColors {
 
   // Utility
   static const Color glassBackground = Color.fromRGBO(255, 255, 255, 0.85);
-  static const Color glassBorder = Color.fromRGBO(186, 230, 216, 0.2);
+  static const Color glassBorder = Color.fromRGBO(224, 64, 0, 0.15);
 }
 
 class AppGradients {
@@ -37,8 +37,8 @@ class AppGradients {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFFBAE6D8),
-      Color(0xFF94D1B9),
+      Color(0xFFE04000),
+      Color(0xFFFF6B2B),
     ],
   );
 
@@ -46,8 +46,8 @@ class AppGradients {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [
-      Color(0xFFF7FBFA),
-      Color(0xFFEFF7F4),
+      Color(0xFFFDF9F8),
+      Color(0xFFFBECE8),
     ],
   );
 
@@ -55,8 +55,8 @@ class AppGradients {
     center: Alignment(0.8, -0.6),
     radius: 1.2,
     colors: [
-      Color(0xFFE2F5EE),
-      Color(0xFFF7FBFA),
+      Color(0xFFFFF0EB),
+      Color(0xFFFDF9F8),
     ],
   );
 }
@@ -69,7 +69,7 @@ class AppShadows {
   );
   
   static const BoxShadow card = BoxShadow(
-    color: Color.fromRGBO(186, 230, 216, 0.1),
+    color: Color.fromRGBO(224, 64, 0, 0.08),
     blurRadius: 30,
     offset: Offset(0, 8),
   );
