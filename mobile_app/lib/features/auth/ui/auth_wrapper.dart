@@ -4,6 +4,7 @@ import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:mobile_app/features/auth/ui/welcome_screen.dart';
 import 'package:mobile_app/features/user/ui/user_main_screen.dart';
 import 'package:mobile_app/features/provider/ui/provider_dashboard.dart';
+import 'package:mobile_app/features/admin/ui/admin_dashboard.dart';
 import 'package:mobile_app/core/design_system.dart';
 
 class AuthWrapper extends StatefulWidget {
@@ -40,6 +41,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
         }
 
         if (auth.isAuthenticated) {
+          if (auth.isAdmin) return const AdminDashboard();
+          
           return auth.isProvider 
             ? const ProviderDashboard() 
             : const UserMainScreen();

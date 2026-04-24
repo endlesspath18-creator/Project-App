@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_app/features/auth/ui/splash_screen.dart';
 import 'package:mobile_app/features/auth/ui/welcome_screen.dart';
 import 'package:mobile_app/features/auth/ui/login_screen.dart';
 import 'package:mobile_app/features/auth/ui/signup_screen.dart';
@@ -10,15 +9,16 @@ import 'package:mobile_app/features/user/ui/categories_screen.dart';
 import 'package:mobile_app/features/user/ui/provider_details_screen.dart';
 import 'package:mobile_app/features/user/ui/booking_screen.dart';
 import 'package:mobile_app/features/user/ui/user_search_screen.dart';
+import 'package:mobile_app/features/notifications/ui/notifications_screen.dart';
 import 'package:mobile_app/features/user/ui/user_favorites_screen.dart';
-import 'package:mobile_app/features/user/ui/notifications_screen.dart';
-import 'package:mobile_app/features/user/ui/settings_screen.dart';
+import 'package:mobile_app/features/user/ui/bookings_view.dart';
 import 'package:mobile_app/features/provider/ui/provider_dashboard.dart';
 import 'package:mobile_app/features/provider/ui/add_service_screen.dart';
 import 'package:mobile_app/features/provider/ui/provider_earnings_screen.dart';
+import 'package:mobile_app/features/provider/ui/provider_services_screen.dart';
+import 'package:mobile_app/features/profile/ui/profile_screen.dart';
 
 class AppRoutes {
-  static const String splash = '/';
   static const String welcome = '/welcome';
   static const String login = '/login';
   static const String signup = '/signup';
@@ -44,6 +44,7 @@ class AppRoutes {
   static const String providerHome = '/providerHome';
   static const String addService = '/addService';
   static const String earnings = '/earnings';
+  static const String providerServices = '/providerServices';
   static const String availability = '/availability';
 
   static Map<String, WidgetBuilder> getRoutes() {
@@ -62,16 +63,17 @@ class AppRoutes {
       search: (context) => const UserSearchScreen(),
       notifications: (context) => const NotificationsScreen(),
       
-      userProfile: (context) => const PlaceholderScreen(title: "Profile"),
+      userProfile: (context) => const ProfileScreen(),
       userFavorites: (context) => const UserFavoritesScreen(),
-      userBookings: (context) => const PlaceholderScreen(title: "My Bookings"),
-      userSettings: (context) => const SettingsScreen(),
+      userBookings: (context) => const BookingsView(isStandalone: true),
+      userSettings: (context) => const ProfileScreen(),
       userHelp: (context) => const PlaceholderScreen(title: "Help & Support"),
 
       // Provider Screens
       providerHome: (context) => const ProviderDashboard(),
       addService: (context) => const AddServiceScreen(),
       earnings: (context) => const ProviderEarningsScreen(),
+      providerServices: (context) => const ProviderServicesScreen(),
       availability: (context) => const PlaceholderScreen(title: "Availability"),
     };
   }

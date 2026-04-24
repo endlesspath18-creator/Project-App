@@ -10,6 +10,7 @@ import bookingRoutes from "./modules/bookings/bookingRoutes";
 import paymentRoutes from "./modules/payments/paymentRoutes";
 import reviewRoutes from "./modules/reviews/reviewRoutes";
 import providerRoutes from "./modules/provider/providerRoutes";
+import adminRoutes from "./modules/admin/adminRoutes";
 
 const app: Application = express();
 
@@ -37,6 +38,7 @@ app.use(`${API_PREFIX}/bookings`, bookingRoutes);
 app.use(`${API_PREFIX}/payments`, paymentRoutes);
 app.use(`${API_PREFIX}/reviews`, reviewRoutes);
 app.use(`${API_PREFIX}/provider`, providerRoutes);
+app.use(`${API_PREFIX}/admin`, adminRoutes);
 
 // Fallback Middlewares
 app.use(notFound);

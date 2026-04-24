@@ -8,7 +8,7 @@ import 'package:mobile_app/providers/dashboard_provider.dart';
 import 'package:mobile_app/core/app_routes.dart';
 import 'package:mobile_app/core/design_system.dart';
 import 'package:mobile_app/core/app_dimensions.dart';
-import 'package:mobile_app/widgets/glass_widgets.dart';
+import 'package:mobile_app/features/profile/ui/profile_screen.dart';
 
 class ProviderDashboard extends StatefulWidget {
   const ProviderDashboard({super.key});
@@ -25,7 +25,7 @@ class _ProviderDashboardState extends State<ProviderDashboard> {
     const _DashboardOverviewTab(),
     const _JobsManageTab(),
     const _EarningsTab(),
-    const _ProviderAccountTab(),
+    const ProfileScreen(),
   ];
 
   @override
@@ -472,49 +472,6 @@ class _TransactionItem extends StatelessWidget {
       subtitle: const Text("24 April 2026"),
       trailing: const Text("+₹450", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
       contentPadding: const EdgeInsets.symmetric(vertical: 8),
-    );
-  }
-}
-
-// ─── PROFILE TAB ────────────────────────────────────────────────────────────
-
-class _ProviderAccountTab extends StatelessWidget {
-  const _ProviderAccountTab();
-
-  @override
-  Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.user;
-
-    return Scaffold(
-      appBar: AppBar(title: const Text("Business Profile")),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 24),
-            CircleAvatar(radius: 50, backgroundColor: AppColors.primary.withValues(alpha: 0.1), child: const Icon(Icons.business_rounded, size: 50, color: AppColors.primary)),
-            const SizedBox(height: 16),
-            Text(user?.businessName ?? "Business Name", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            Text(user?.email ?? "", style: const TextStyle(color: AppColors.textSecondary)),
-            const SizedBox(height: 32),
-            Padding(
-               padding: const EdgeInsets.symmetric(horizontal: 24),
-               child: Column(
-                 children: [
-                   _AccountItem(Icons.edit_note_rounded, "Edit Business Info", () {}),
-                   _AccountItem(Icons.notifications_outlined, "Notifications", () {}),
-                   _AccountItem(Icons.security_rounded, "Privacy & Security", () {}),
-                   _AccountItem(Icons.help_center_outlined, "Help Center", () {}),
-                   const Divider(height: 48),
-                   _AccountItem(Icons.logout_rounded, "Logout", () {
-                     authProvider.logout().then((_) => Navigator.pushReplacementNamed(context, AppRoutes.welcome));
-                   }, isDestructive: true),
-                 ],
-               ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

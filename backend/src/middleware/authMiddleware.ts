@@ -50,3 +50,11 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
     return sendError(res, 401, "Not authorized to access this route");
   }
 };
+
+export const adminOnly = (req: Request, res: Response, next: NextFunction) => {
+  if (req.user && req.user.role === "ADMIN") {
+    next();
+  } else {
+    return sendError(res, 403, "Access denied: Admin role required");
+  }
+};

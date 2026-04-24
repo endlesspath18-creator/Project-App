@@ -8,6 +8,10 @@ import 'package:mobile_app/core/app_routes.dart';
 import 'package:mobile_app/core/design_system.dart';
 import 'package:mobile_app/core/app_dimensions.dart';
 import 'package:mobile_app/widgets/glass_widgets.dart';
+import 'package:mobile_app/features/user/ui/bookings_view.dart';
+import 'package:mobile_app/features/profile/ui/profile_screen.dart';
+import 'package:mobile_app/features/notifications/ui/notifications_screen.dart';
+import 'package:mobile_app/features/user/ui/user_favorites_screen.dart';
 import 'package:mobile_app/data/service_model.dart';
 
 class UserMainScreen extends StatefulWidget {
@@ -23,9 +27,9 @@ class _UserMainScreenState extends State<UserMainScreen> {
 
   final List<Widget> _pages = [
     const _HomeTab(),
-    const _BookingsTab(),
-    const PlaceholderScreen(title: "Notifications"),
-    const _AccountTab(),
+    const BookingsView(),
+    const NotificationsScreen(),
+    const ProfileScreen(),
   ];
 
   @override
@@ -302,91 +306,6 @@ class _HomeTabState extends State<_HomeTab> {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ─── ACCOUNT TAB ────────────────────────────────────────────────────────────
-
-class _AccountTab extends StatelessWidget {
-  const _AccountTab();
-
-  @override
-  Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.user;
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
-                gradient: AppGradients.bgGlow,
-                borderRadius: BorderRadius.only(bottomLeft: Radius.circular(32), bottomRight: Radius.circular(32)),
-              ),
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    const CircleAvatar(
-                      radius: 50,
-                      backgroundColor: AppColors.primary,
-                      child: Icon(Icons.person, size: 50, color: Colors.white),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(user?.fullName ?? "Guest User", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    Text(user?.email ?? "", style: const TextStyle(color: AppColors.textSecondary)),
-                    const SizedBox(height: 16),
-                    GlassButton(
-                      onPressed: () {},
-                      text: "Edit Profile",
-                      width: 150,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  _AccountItem(Icons.favorite_border_rounded, "Favorites", () => Navigator.pushNamed(context, AppRoutes.userFavorites)),
-                  _AccountItem(Icons.history_rounded, "Booking History", () => Navigator.pushNamed(context, AppRoutes.userBookings)),
-                  _AccountItem(Icons.settings_outlined, "Settings", () => Navigator.pushNamed(context, AppRoutes.userSettings)),
-                  _AccountItem(Icons.help_outline_rounded, "Help & Support", () => Navigator.pushNamed(context, AppRoutes.userHelp)),
-                  _AccountItem(Icons.info_outline_rounded, "About Us", () {}),
-                  const Divider(height: 48),
-                  _AccountItem(Icons.logout_rounded, "Logout", () {
-                    authProvider.logout().then((_) => Navigator.pushReplacementNamed(context, AppRoutes.welcome));
-                  }, isDestructive: true),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AccountItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-  final bool isDestructive;
-
-  const _AccountItem(this.icon, this.title, this.onTap, {this.isDestructive = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      leading: Icon(icon, color: isDestructive ? AppColors.error : AppColors.primary),
-      title: Text(title, style: TextStyle(fontWeight: FontWeight.w500, color: isDestructive ? AppColors.error : AppColors.textPrimary)),
-      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-      contentPadding: EdgeInsets.zero,
     );
   }
 }

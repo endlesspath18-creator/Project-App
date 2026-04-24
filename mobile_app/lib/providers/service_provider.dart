@@ -20,7 +20,10 @@ class ServiceProvider extends ChangeNotifier {
   }
 
   // ─── Fetch All Services (Marketplace) ──────────────────────────────────────
-  Future<void> fetchAllServices({String? category, String? query}) async {
+  Future<void> fetchAllServices({String? category, String? query, bool force = false}) async {
+    if (_isLoading) return;
+    if (!force && _services.isNotEmpty && category == null && query == null) return;
+
     _setLoading(true);
     _error = null;
     try {
@@ -30,7 +33,6 @@ class ServiceProvider extends ChangeNotifier {
 
       final uri = Uri(path: AppConstants.servicesEndpoint, queryParameters: queryParams.isNotEmpty ? queryParams : null).toString();
       
-      debugPrint('FETCH_SERVICES: Requesting $uri');
       final response = await ApiClient.get(uri);
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['data'] ?? [];
@@ -44,18 +46,24 @@ class ServiceProvider extends ChangeNotifier {
   }
 
   // ─── Fetch Provider specific services ──────────────────────────────────────
-  Future<void> fetchProviderServices() async {
+  Future<void> fetchProviderServices({bool force = false}) async {
+    if (_isLoading) return;
+    if (!force && _providerServices.isNotEmpty) return;
+
     _setLoading(true);
     _error = null;
     try {
-      debugPrint('FETCH_MY_SERVICES: Requesting ${AppConstants.providerServicesEndpoint}');
       final response = await ApiClient.get(AppConstants.providerServicesEndpoint);
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['data'] ?? [];
         _providerServices = data.map((s) => ServiceModel.fromJson(s as Map<String, dynamic>)).toList();
       }
     } catch (e) {
-      _error = 'Failed to load your services: $e';
+      if (e.toString().contains('403')) {
+        debugPrint('GUARD: Blocked unauthorized fetchProviderServices');
+      } else {
+        _error = 'Failed to load your services: $e';
+      }
     } finally {
       _setLoading(false);
     }

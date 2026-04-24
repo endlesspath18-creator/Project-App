@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:mobile_app/core/api_client.dart';
+import 'package:mobile_app/core/constants.dart';
 
 enum BookingViewType { user, provider }
 
@@ -32,54 +33,74 @@ class BookingProvider with ChangeNotifier {
   }
 
   // Fetch bookings for regular users
-  Future<void> fetchUserBookings() async {
+  Future<void> fetchUserBookings({bool force = false}) async {
+    if (_isLoading) return;
+    if (!force && _userBookings.isNotEmpty) return;
+    
     _setLoading(true);
     _setError(null);
     try {
-      final response = await ApiClient.get('/api/bookings/my');
+      final response = await ApiClient.get(AppConstants.userBookings);
       if (response.statusCode == 200) {
         _userBookings = response.data['data'] as List<dynamic>;
       }
     } catch (e) {
-      _setError('Failed to fetch your bookings: $e');
+      if (e.toString().contains('403')) {
+        debugPrint('GUARD: Blocked unauthorized fetchUserBookings');
+      } else {
+        _setError('Failed to fetch your bookings: $e');
+      }
     } finally {
       _setLoading(false);
     }
   }
 
   // Fetch bookings for providers
-  Future<void> fetchProviderRequests() async {
+  Future<void> fetchProviderRequests({bool force = false}) async {
+    if (_isLoading) return;
+    if (!force && _incomingRequests.isNotEmpty) return;
+
     _setLoading(true);
     _setError(null);
     try {
-      final response = await ApiClient.get('/api/bookings/provider');
+      final response = await ApiClient.get(AppConstants.providerBookings);
       if (response.statusCode == 200) {
         _incomingRequests = response.data['data'] as List<dynamic>;
       }
     } catch (e) {
-      _setError('Failed to fetch incoming requests: $e');
+      if (e.toString().contains('403')) {
+        debugPrint('GUARD: Blocked unauthorized fetchProviderRequests');
+      } else {
+        _setError('Failed to fetch incoming requests: $e');
+      }
     } finally {
       _setLoading(false);
     }
   }
 
-  Future<void> fetchActiveJobs() async {
+  Future<void> fetchActiveJobs({bool force = false}) async {
+    if (_isLoading) return;
+    if (!force && _providerBookings.isNotEmpty) return;
+
     _setLoading(true);
     _setError(null);
     try {
-      // Backend getProviderBookings returns all, we filter local if needed or just use separate
-      final response = await ApiClient.get('/api/bookings/provider');
+      final response = await ApiClient.get(AppConstants.providerBookings);
       if (response.statusCode == 200) {
         _providerBookings = response.data['data'] as List<dynamic>;
       }
     } catch (e) {
-      _setError('Failed to fetch active jobs: $e');
+       if (e.toString().contains('403')) {
+        debugPrint('GUARD: Blocked unauthorized fetchActiveJobs');
+      } else {
+        _setError('Failed to fetch active jobs: $e');
+      }
     } finally {
       _setLoading(false);
     }
   }
 
-  // Create a new booking (returns booking data for payment flow)
+  // Create a new booking
   Future<Map<String, dynamic>?> createBooking({
     required String serviceId,
     required DateTime scheduledDate,
@@ -90,18 +111,16 @@ class BookingProvider with ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      final response = await ApiClient.post('/api/bookings', {
+      final response = await ApiClient.post(AppConstants.createBooking, {
         'serviceId': serviceId,
         'scheduledDate': scheduledDate.toUtc().toIso8601String(),
         'address': address,
         'notes': notes,
         'paymentMethod': paymentMethod,
-        'paymentStatus': paymentMethod == 'ONLINE' ? 'PENDING' : 'PENDING',
+        'paymentStatus': 'PENDING',
       });
 
-      if (response.statusCode == 201) {
-        return response.data['data'];
-      }
+      if (response.statusCode == 201) return response.data['data'];
       _setError(response.data['message'] ?? 'Failed to book service');
       return null;
     } catch (e) {
@@ -112,18 +131,13 @@ class BookingProvider with ChangeNotifier {
     }
   }
 
-  // Razorpay: Step 2 - Create Order using bookingId
+  // Razorpay Order Creation
   Future<Map<String, dynamic>?> createPaymentOrder(String bookingId) async {
     _setLoading(true);
     _setError(null);
     try {
-      final response = await ApiClient.post('/api/payments/create-order', {
-        'bookingId': bookingId,
-      });
-
-      if (response.statusCode == 201) {
-        return response.data['data']; // Contains orderId, amount, key
-      }
+      final response = await ApiClient.post(AppConstants.paymentsCreateOrder, {'bookingId': bookingId});
+      if (response.statusCode == 201) return response.data['data'];
       _setError(response.data['message'] ?? 'Failed to create payment order');
       return null;
     } catch (e) {
@@ -134,7 +148,7 @@ class BookingProvider with ChangeNotifier {
     }
   }
 
-  // Razorpay: Step 3 - Verify and Finalize Booking
+  // Razorpay Verification
   Future<bool> verifyAndConfirmBooking({
     required String orderId,
     required String paymentId,
@@ -144,16 +158,13 @@ class BookingProvider with ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      final response = await ApiClient.post('/api/payments/verify', {
+      final response = await ApiClient.post(AppConstants.paymentsVerify, {
         'razorpay_order_id': orderId,
         'razorpay_payment_id': paymentId,
         'razorpay_signature': signature,
         'bookingId': bookingId,
       });
-
-      if (response.statusCode == 201) return true;
-      _setError(response.data['message'] ?? 'Payment verification failed');
-      return false;
+      return response.statusCode == 201;
     } catch (e) {
       _setError('Verification Error: $e');
       return false;
@@ -167,12 +178,11 @@ class BookingProvider with ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      // Endpoint mapping: accept, reject, start, complete
-      final endpoint = '/api/bookings/$bookingId/$action';
+      final endpoint = '/bookings/$bookingId/$action';
       final response = await ApiClient.patch(endpoint, {});
 
       if (response.statusCode == 200) {
-        await fetchProviderRequests(); // Sync lists
+        await fetchProviderRequests();
         await fetchActiveJobs();
         return true;
       } else {

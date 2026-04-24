@@ -44,16 +44,23 @@ class DashboardProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchStats() async {
+  Future<void> fetchStats({bool force = false}) async {
+    if (_isLoading) return;
+    if (!force && _stats != null) return;
+
     _setLoading(true);
     _error = null;
     try {
-      final response = await ApiClient.get('/api/provider/dashboard');
+      final response = await ApiClient.get('/provider/dashboard');
       if (response.statusCode == 200) {
         _stats = DashboardStats.fromJson(response.data['data']);
       }
     } catch (e) {
-      _error = 'Failed to load dashboard: $e';
+      if (e.toString().contains('403')) {
+        debugPrint('GUARD: Blocked unauthorized fetchStats');
+      } else {
+        _error = 'Failed to load dashboard: $e';
+      }
     } finally {
       _setLoading(false);
     }

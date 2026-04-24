@@ -21,6 +21,7 @@ class AuthProvider extends ChangeNotifier {
   String? get error => _error;
   bool get isAuthenticated => _user != null;
   bool get isProvider => _user?.role == 'PROVIDER';
+  bool get isAdmin => _user?.role == 'ADMIN';
 
   void _setLoading(bool value) {
     _isLoading = value;
