@@ -1,82 +1,74 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'design_system.dart';
 
 class AppTheme {
-  // Brand Colors
-  static const Color primary = Color(0xFF2563EB); // Modern Blue
-  static const Color accent = Color(0xFFFACC15); // Vibrant Yellow
-  static const Color background = Color(0xFFFFFFFF);
-  static const Color surface = Color(0xFFF8FAFC);
-  static const Color textPrimary = Color(0xFF1E293B); // Slate 800
-  static const Color textSecondary = Color(0xFF64748B); // Slate 500
-  static const Color border = Color(0xFFE2E8F0); // Slate 200
-
-  static ThemeData get light {
+  static ThemeData get dark {
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.light(
-        primary: primary,
-        secondary: accent,
-        surface: background,
-        onSurface: textPrimary,
+      brightness: Brightness.dark,
+      colorScheme: const ColorScheme.dark(
+        primary: GlacierColors.primary,
+        secondary: GlacierColors.secondary,
+        tertiary: GlacierColors.tertiary,
+        surface: GlacierColors.surface,
+        onSurface: GlacierColors.onSurface,
+        background: GlacierColors.background,
+        onBackground: GlacierColors.onSurface,
+        error: GlacierColors.error,
       ),
-      scaffoldBackgroundColor: background,
+      scaffoldBackgroundColor: GlacierColors.background,
       
-      // Modern Typography
-      textTheme: GoogleFonts.outfitTextTheme().copyWith(
-        displayLarge: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: textPrimary),
-        headlineLarge: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: textPrimary),
-        headlineMedium: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: textPrimary),
-        titleLarge: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: textPrimary),
-        bodyLarge: GoogleFonts.inter(color: textPrimary),
-        bodyMedium: GoogleFonts.inter(color: textSecondary),
+      // Modern Typography using Inter
+      textTheme: GoogleFonts.interTextTheme().copyWith(
+        displayLarge: GoogleFonts.inter(fontWeight: FontWeight.bold, color: GlacierColors.onSurface),
+        headlineLarge: GoogleFonts.inter(fontWeight: FontWeight.bold, color: GlacierColors.onSurface),
+        headlineMedium: GoogleFonts.inter(fontWeight: FontWeight.bold, color: GlacierColors.onSurface),
+        titleLarge: GoogleFonts.inter(fontWeight: FontWeight.w600, color: GlacierColors.onSurface),
+        bodyLarge: GoogleFonts.inter(color: GlacierColors.onSurface),
+        bodyMedium: GoogleFonts.inter(color: GlacierColors.onSurfaceVariant),
+      ),
+
+      // Card Theme
+      cardTheme: CardTheme(
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        color: GlacierColors.surface,
       ),
 
       // Input Decoration
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surface,
+        fillColor: GlacierColors.glassBackground.withOpacity(0.3),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: border),
+          borderSide: const BorderSide(color: GlacierColors.glassBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: border),
+          borderSide: const BorderSide(color: GlacierColors.glassBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primary, width: 2),
+          borderSide: const BorderSide(color: GlacierColors.primary, width: 2),
         ),
-        contentPadding: const EdgeInsets.all(20),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       ),
 
       // Button Themes
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: Colors.white,
+          backgroundColor: GlacierColors.primary,
+          foregroundColor: GlacierColors.background,
           minimumSize: const Size(double.infinity, 56),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 0,
-          textStyle: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 16),
+          textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
         ),
-      ),
-
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size(double.infinity, 56),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          side: const BorderSide(color: border),
-          textStyle: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 16),
-        ),
-      ),
-
-      cardTheme: CardThemeData(
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        color: background,
       ),
     );
   }
+
+  // Keep light getter for backward compatibility or future use, but point to dark for now
+  static ThemeData get light => dark;
 }

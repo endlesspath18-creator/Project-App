@@ -26,23 +26,3 @@ export const loginSchema = z.object({
   })
 });
 
-export const googleLoginSchema = z.object({
-  body: z.object({
-    idToken: z.string().min(1, "ID Token is required"),
-  })
-});
-
-export const completeSocialSignupSchema = z.object({
-  body: z.object({
-    role: z.enum(["USER", "PROVIDER"]),
-    businessName: z.string().optional(),
-  }).refine((data) => {
-    if (data.role === "PROVIDER" && (!data.businessName || data.businessName.trim() === "")) {
-      return false;
-    }
-    return true;
-  }, {
-    message: "businessName is required when role is PROVIDER",
-    path: ["businessName"]
-  })
-});

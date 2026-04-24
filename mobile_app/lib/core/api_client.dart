@@ -27,7 +27,7 @@ class ServerException extends ApiException {
 }
 
 class UnauthorizedException extends ApiException {
-  const UnauthorizedException() : super('Session expired. Please log in again.', statusCode: 401);
+  const UnauthorizedException([String? message]) : super(message ?? 'Session expired. Please log in again.', statusCode: 401);
 }
 
 // ─── API Client ─────────────────────────────────────────────────────────────
@@ -47,8 +47,7 @@ class ApiClient {
     
     // Do not send Authorization header for public auth routes to avoid session collisions.
     final bool isPublicAuthRoute = endpoint.contains('/auth/login') || 
-                                    endpoint.contains('/auth/register') || 
-                                    endpoint.contains('/auth/google');
+                                    endpoint.contains('/auth/register');
 
     return {
       'Content-Type': 'application/json',
@@ -70,7 +69,7 @@ class ApiClient {
   static ApiException? _fromStatus(int code, Map<String, dynamic> body) {
     final msg = body['message'] as String? ?? body['error'] as String? ?? 'Unknown error';
     switch (code) {
-      case 401: return const UnauthorizedException();
+      case 401: return UnauthorizedException(msg);
       case 403: return ApiException('Access denied.', statusCode: 403);
       case 404: return ApiException('Resource not found.', statusCode: 404);
       case 422: return ApiException(msg, statusCode: 422);
