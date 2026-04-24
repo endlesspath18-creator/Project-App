@@ -22,6 +22,7 @@ class _BookingScreenState extends State<BookingScreen> {
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
   String _selectedTimeSlot = "10:00 AM";
   String _paymentMethod = "COD"; // COD or ONLINE
+  String? _currentBookingId;
 
   late Razorpay _razorpay;
   late ServiceModel _service;
@@ -51,20 +52,18 @@ class _BookingScreenState extends State<BookingScreen> {
   // ─── Razorpay Callbacks ──────────────────────────────────────────────────
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    if (_currentBookingId == null) {
+      _showSnackBar("Verification Error: Missing booking ID", isError: true);
+      return;
+    }
+
     final provider = context.read<BookingProvider>();
     
-    final bookingData = {
-      'serviceId': _service.id,
-      'dateTime': _selectedDate.toIso8601String(),
-      'address': _addressController.text.trim(),
-      'notes': _notesController.text.trim(),
-    };
-
     final success = await provider.verifyAndConfirmBooking(
       orderId: response.orderId!,
       paymentId: response.paymentId!,
       signature: response.signature!,
-      bookingData: bookingData,
+      bookingId: _currentBookingId!,
     );
 
     if (success && mounted) {
@@ -94,7 +93,7 @@ class _BookingScreenState extends State<BookingScreen> {
     final authProvider = context.read<AuthProvider>();
 
     if (_paymentMethod == "COD") {
-      final success = await bookingProvider.createBooking(
+      final booking = await bookingProvider.createBooking(
         serviceId: _service.id,
         address: _addressController.text.trim(),
         scheduledDate: _selectedDate,
@@ -102,20 +101,36 @@ class _BookingScreenState extends State<BookingScreen> {
         paymentMethod: "COD",
       );
 
-      if (success && mounted) {
+      if (booking != null && mounted) {
         _showSuccessDialog("Booking Request Sent! Pay after service completion.");
       } else if (mounted) {
         _showSnackBar(bookingProvider.error ?? "Booking failed", isError: true);
       }
     } else {
-      // Step 1: Create Razorpay Order
-      final orderData = await bookingProvider.createPaymentOrder(_service.id);
+      // Step 1: Create Booking First (in PENDING status)
+      final booking = await bookingProvider.createBooking(
+        serviceId: _service.id,
+        address: _addressController.text.trim(),
+        scheduledDate: _selectedDate,
+        notes: _notesController.text.trim(),
+        paymentMethod: "ONLINE",
+      );
+
+      if (booking == null) {
+        _showSnackBar(bookingProvider.error ?? "Failed to initialize booking", isError: true);
+        return;
+      }
+
+      setState(() => _currentBookingId = booking['id']);
+
+      // Step 2: Create Razorpay Order using bookingId
+      final orderData = await bookingProvider.createPaymentOrder(booking['id']);
       if (orderData == null) {
         _showSnackBar(bookingProvider.error ?? "Failed to initialize payment", isError: true);
         return;
       }
 
-      // Step 2: Open Razorpay Checkout
+      // Step 3: Open Razorpay Checkout
       var options = {
         'key': orderData['key'],
         'amount': (orderData['amount'] * 100).toInt(), // amount in paise

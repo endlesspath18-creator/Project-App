@@ -74,8 +74,8 @@ class BookingProvider with ChangeNotifier {
     }
   }
 
-  // Create a new booking (COD or fallback)
-  Future<bool> createBooking({
+  // Create a new booking (returns booking data for payment flow)
+  Future<Map<String, dynamic>?> createBooking({
     required String serviceId,
     required DateTime scheduledDate,
     required String address,
@@ -91,26 +91,29 @@ class BookingProvider with ChangeNotifier {
         'address': address,
         'notes': notes,
         'paymentMethod': paymentMethod,
+        'paymentStatus': paymentMethod == 'ONLINE' ? 'PENDING' : 'PENDING',
       });
 
-      if (response.statusCode == 201) return true;
+      if (response.statusCode == 201) {
+        return response.data['data'];
+      }
       _setError(response.data['message'] ?? 'Failed to book service');
-      return false;
+      return null;
     } catch (e) {
       _setError('$e');
-      return false;
+      return null;
     } finally {
       _setLoading(false);
     }
   }
 
-  // Razorpay: Step 1 - Create Order
-  Future<Map<String, dynamic>?> createPaymentOrder(String serviceId) async {
+  // Razorpay: Step 2 - Create Order using bookingId
+  Future<Map<String, dynamic>?> createPaymentOrder(String bookingId) async {
     _setLoading(true);
     _setError(null);
     try {
       final response = await ApiClient.post('/api/payments/create-order', {
-        'serviceId': serviceId,
+        'bookingId': bookingId,
       });
 
       if (response.statusCode == 201) {
@@ -126,12 +129,12 @@ class BookingProvider with ChangeNotifier {
     }
   }
 
-  // Razorpay: Step 2 - Verify and Finalize Booking
+  // Razorpay: Step 3 - Verify and Finalize Booking
   Future<bool> verifyAndConfirmBooking({
     required String orderId,
     required String paymentId,
     required String signature,
-    required Map<String, dynamic> bookingData,
+    required String bookingId,
   }) async {
     _setLoading(true);
     _setError(null);
@@ -140,7 +143,7 @@ class BookingProvider with ChangeNotifier {
         'razorpay_order_id': orderId,
         'razorpay_payment_id': paymentId,
         'razorpay_signature': signature,
-        'bookingData': bookingData,
+        'bookingId': bookingId,
       });
 
       if (response.statusCode == 201) return true;
