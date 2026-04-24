@@ -1,10 +1,10 @@
 
 import 'package:flutter/material.dart';
-import '../core/api_client.dart';
-import '../core/constants.dart';
-import '../core/storage_service.dart';
-import '../data/user_model.dart';
-import '../data/auth_response_model.dart';
+import 'package:mobile_app/core/api_client.dart';
+import 'package:mobile_app/core/constants.dart';
+import 'package:mobile_app/core/storage_service.dart';
+import 'package:mobile_app/data/user_model.dart';
+import 'package:mobile_app/data/auth_response_model.dart';
 
 class AuthProvider extends ChangeNotifier {
   final bool isFirebaseAvailable;

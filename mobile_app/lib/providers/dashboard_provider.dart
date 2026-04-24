@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../core/api_client.dart';
+import 'package:mobile_app/core/api_client.dart';
 
 class DashboardStats {
   final double earnings;

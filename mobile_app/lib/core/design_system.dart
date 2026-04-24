@@ -1,61 +1,77 @@
 import 'package:flutter/material.dart';
 
-class GlacierColors {
+class AppColors {
+  // Brand Color
+  static const Color primary = Color(0xFFDB2383);
+  static const Color primaryLight = Color(0xFFFFE6F2);
+  static const Color primaryDark = Color(0xFFB01C69);
+  static const Color primaryContainer = Color(0xFFFFE6F2); // Added as fallback
+  
   // Base Colors
-  static const Color background = Color(0xFF0A0E1A);
-  static const Color primary = Color(0xFF7DD3FC);
-  static const Color primaryContainer = Color(0xFF0E4D6E);
-  static const Color onPrimaryContainer = Color(0xFFC8EAFF);
+  static const Color background = Color(0xFFFBFBFE);
+  static const Color surface = Colors.white;
+  static const Color surfaceVariant = Color(0xFFF1F5F9);
   
-  static const Color secondary = Color(0xFF88B4CC);
-  static const Color tertiary = Color(0xFFC8A0F0);
+  // Text Colors
+  static const Color textPrimary = Color(0xFF0F172A);
+  static const Color textSecondary = Color(0xFF64748B);
+  static const Color textTertiary = Color(0xFF94A3B8);
   
-  static const Color surface = Color(0xFF0F1524);
-  static const Color surfaceVariant = Color(0xFF1A2438);
-  static const Color onSurface = Color(0xFFE0E8F0);
-  static const Color onSurfaceVariant = Color(0xFFA0B4C4);
+  // Interaction Colors
+  static const Color secondary = Color(0xFF6366F1); // Indigo accent
+  static const Color tertiary = Color(0xFF10B981);  // Emerald accent
+  static const Color error = Color(0xFFEF4444);
+  static const Color warning = Color(0xFFF59E0B);
   
-  static const Color error = Color(0xFFFF6B6B);
-  
-  // Glass Constants
-  static const Color glassBackground = Color.fromRGBO(15, 21, 36, 0.6);
-  static const Color glassBorder = Color.fromRGBO(125, 211, 252, 0.15);
-  static const Color glassLuminousBorder = Color.fromRGBO(255, 255, 255, 0.1);
+  // Grays / Borders
+  static const Color border = Color(0xFFE2E8F0);
+  static const Color divider = Color(0xFFF1F5F9);
+
+  // Utility
+  static const Color glassBackground = Color.fromRGBO(255, 255, 255, 0.8);
+  static const Color glassBorder = Color.fromRGBO(219, 35, 131, 0.1);
 }
 
-class GlacierGradients {
-  static const LinearGradient ice = LinearGradient(
+class AppGradients {
+  static const LinearGradient primary = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFF7DD3FC),
-      Color(0xFF38BDF8),
+      Color(0xFFDB2383),
+      Color(0xFFFF4D9C),
     ],
   );
 
-  static const LinearGradient glass = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
+  static const LinearGradient soft = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
     colors: [
-      Color.fromRGBO(255, 255, 255, 0.1),
-      Color.fromRGBO(255, 255, 255, 0.05),
+      Color(0xFFFBFBFE),
+      Color(0xFFF1F5F9),
     ],
   );
 
   static const RadialGradient bgGlow = RadialGradient(
-    center: Alignment(-0.8, -0.6),
-    radius: 1.5,
+    center: Alignment(0.8, -0.6),
+    radius: 1.2,
     colors: [
-      Color(0xFF0E4D6E),
-      Color(0xFF0A0E1A),
+      Color(0xFFFFE6F2),
+      Color(0xFFFBFBFE),
     ],
   );
 }
 
-class GlacierShadows {
-  static const BoxShadow softGlow = BoxShadow(
-    color: Color.fromRGBO(125, 211, 252, 0.05),
+class AppShadows {
+  static const BoxShadow soft = BoxShadow(
+    color: Color.fromRGBO(0, 0, 0, 0.05),
+    blurRadius: 20,
+    offset: Offset(0, 10),
+  );
+  
+  static const BoxShadow card = BoxShadow(
+    color: Color.fromRGBO(219, 35, 131, 0.08),
     blurRadius: 30,
-    spreadRadius: 2,
+    offset: Offset(0, 4),
   );
 }
+

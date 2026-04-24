@@ -1,4 +1,4 @@
-import 'user_model.dart';
+import 'package:mobile_app/data/user_model.dart';
 
 class AuthResponse {
   final UserModel? user;

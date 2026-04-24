@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 
-import 'core/theme.dart';
-import 'core/app_routes.dart';
-import 'core/constants.dart';
-import 'providers/auth_provider.dart';
-import 'providers/service_provider.dart';
-import 'providers/booking_provider.dart';
-import 'providers/dashboard_provider.dart';
+import 'package:mobile_app/theme/app_theme.dart';
+import 'package:mobile_app/core/app_routes.dart';
+import 'package:mobile_app/core/constants.dart';
+import 'package:mobile_app/providers/auth_provider.dart';
+import 'package:mobile_app/providers/service_provider.dart';
+import 'package:mobile_app/providers/booking_provider.dart';
+import 'package:mobile_app/providers/dashboard_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,9 +41,8 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: AppConstants.appName,
-        theme: AppTheme.dark,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.dark,
+        theme: AppTheme.light,
+        themeMode: ThemeMode.light,
         initialRoute: AppRoutes.splash,
         routes: AppRoutes.getRoutes(),
         debugShowCheckedModeBanner: false,

@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'constants.dart';
-import 'storage_service.dart';
+import 'package:mobile_app/core/constants.dart';
+import 'package:mobile_app/core/storage_service.dart';
 
 // ─── Typed API Exceptions ──────────────────────────────────────────────────
 class ApiException implements Exception {

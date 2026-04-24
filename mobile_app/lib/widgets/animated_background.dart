@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:mobile_app/core/design_system.dart';
 
 class AnimatedBackground extends StatefulWidget {
   final Widget child;
@@ -17,7 +18,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground> with SingleTick
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 10),
+      duration: const Duration(seconds: 15),
     )..repeat();
   }
 
@@ -53,36 +54,37 @@ class BackgroundPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Draw background color
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), Paint()..color = const Color(0xFFFFFFFF));
+    // Fill deep background
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), Paint()..color = AppColors.background);
 
-    // Blob 1 (Top Left)
-    final offset1 = Offset(
-      size.width * 0.1 + math.sin(animationValue * 2 * math.pi) * 20,
-      size.height * 0.1 + math.cos(animationValue * 2 * math.pi) * 20,
+    // Dynamic Blobs - Soft and subtle for light theme
+    _drawBlob(
+      canvas, 
+      size, 
+      Offset(
+        size.width * 0.2 + math.sin(animationValue * 2 * math.pi) * 40,
+        size.height * 0.2 + math.cos(animationValue * 2 * math.pi) * 40,
+      ), 
+      200, 
+      AppColors.primary.withValues(alpha: 0.05)
     );
 
-    _drawBlob(canvas, size, offset1, 150, const Color(0xFF2563EB).withValues(alpha: 0.05));
-
-    // Blob 2 (Bottom Right)
-    final offset2 = Offset(
-      size.width * 0.8 + math.cos(animationValue * 2 * math.pi) * 30,
-      size.height * 0.8 + math.sin(animationValue * 2 * math.pi) * 30,
+    _drawBlob(
+      canvas, 
+      size, 
+      Offset(
+        size.width * 0.8 + math.cos(animationValue * 2 * math.pi) * 60,
+        size.height * 0.7 + math.sin(animationValue * 2 * math.pi) * 60,
+      ), 
+      250, 
+      AppColors.secondary.withValues(alpha: 0.03)
     );
-    _drawBlob(canvas, size, offset2, 200, const Color(0xFF7C3AED).withValues(alpha: 0.05));
-
-    // Blob 3 (Middle Right)
-    final offset3 = Offset(
-      size.width * 0.9 + math.sin(animationValue * 2 * math.pi + 1) * 25,
-      size.height * 0.4 + math.cos(animationValue * 2 * math.pi + 1) * 25,
-    );
-    _drawBlob(canvas, size, offset3, 120, const Color(0xFF2563EB).withValues(alpha: 0.03));
   }
 
   void _drawBlob(Canvas canvas, Size size, Offset center, double radius, Color color) {
     final paint = Paint()
       ..color = color
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 50);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 100); // Higher blur for light theme
     canvas.drawCircle(center, radius, paint);
   }
 

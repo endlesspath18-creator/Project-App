@@ -1,30 +1,50 @@
 import 'package:flutter/material.dart';
-import '../ui/screens/splash_screen.dart';
-import '../ui/screens/auth/welcome_screen.dart';
-import '../ui/screens/auth/login_screen.dart';
-import '../ui/screens/auth/signup_screen.dart';
-import '../ui/screens/auth/forgot_password_screen.dart';
-import '../ui/screens/auth/otp_screen.dart';
-import '../ui/screens/home/user_home_screen.dart';
-import '../ui/screens/home/provider_home_screen.dart';
-import '../ui/screens/home/add_service_screen.dart';
-import '../ui/screens/home/categories_screen.dart';
-import '../ui/screens/home/provider_details_screen.dart';
-import '../ui/screens/home/booking_screen.dart';
+import 'package:mobile_app/features/auth/ui/splash_screen.dart';
+import 'package:mobile_app/features/auth/ui/welcome_screen.dart';
+import 'package:mobile_app/features/auth/ui/login_screen.dart';
+import 'package:mobile_app/features/auth/ui/signup_screen.dart';
+import 'package:mobile_app/features/auth/ui/forgot_password_screen.dart';
+import 'package:mobile_app/features/auth/ui/otp_screen.dart';
+import 'package:mobile_app/features/user/ui/user_main_screen.dart';
+import 'package:mobile_app/features/user/ui/categories_screen.dart';
+import 'package:mobile_app/features/user/ui/provider_details_screen.dart';
+import 'package:mobile_app/features/user/ui/booking_screen.dart';
+import 'package:mobile_app/features/user/ui/user_search_screen.dart';
+import 'package:mobile_app/features/user/ui/user_favorites_screen.dart';
+import 'package:mobile_app/features/user/ui/notifications_screen.dart';
+import 'package:mobile_app/features/user/ui/settings_screen.dart';
+import 'package:mobile_app/features/provider/ui/provider_dashboard.dart';
+import 'package:mobile_app/features/provider/ui/add_service_screen.dart';
+import 'package:mobile_app/features/provider/ui/provider_earnings_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
   static const String welcome = '/welcome';
   static const String login = '/login';
   static const String signup = '/signup';
-  static const String forgotPassword = '/forgot-password';
+  static const String forgotPassword = '/forgotPassword';
   static const String otp = '/otp';
-  static const String userHome = '/user-home';
-  static const String providerHome = '/provider-home';
-  static const String addService = '/add-service';
+  
+  // User Panel
+  static const String userHome = '/userHome';
   static const String categories = '/categories';
-  static const String providerDetails = '/provider-details';
+  static const String providerDetails = '/providerDetails';
   static const String booking = '/booking';
+  static const String search = '/search';
+  static const String notifications = '/notifications';
+  
+  // Specifically requested by user
+  static const String userProfile = '/userProfile';
+  static const String userFavorites = '/userFavorites';
+  static const String userBookings = '/userBookings';
+  static const String userSettings = '/userSettings';
+  static const String userHelp = '/userHelp';
+  
+  // Provider Panel
+  static const String providerHome = '/providerHome';
+  static const String addService = '/addService';
+  static const String earnings = '/earnings';
+  static const String availability = '/availability';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return {
@@ -34,12 +54,39 @@ class AppRoutes {
       signup: (context) => const SignupScreen(),
       forgotPassword: (context) => const ForgotPasswordScreen(),
       otp: (context) => const OTPScreen(),
-      userHome: (context) => const UserHomeScreen(),
-      providerHome: (context) => const ProviderHomeScreen(),
-      addService: (context) => const AddServiceScreen(),
+      
+      // User Screens
+      userHome: (context) => const UserMainScreen(),
       categories: (context) => const CategoriesScreen(),
       providerDetails: (context) => const ProviderDetailsScreen(),
       booking: (context) => const BookingScreen(),
+      search: (context) => const UserSearchScreen(),
+      notifications: (context) => const NotificationsScreen(),
+      
+      userProfile: (context) => const PlaceholderScreen(title: "Profile"),
+      userFavorites: (context) => const UserFavoritesScreen(),
+      userBookings: (context) => const PlaceholderScreen(title: "My Bookings"),
+      userSettings: (context) => const SettingsScreen(),
+      userHelp: (context) => const PlaceholderScreen(title: "Help & Support"),
+
+      // Provider Screens
+      providerHome: (context) => const ProviderDashboard(),
+      addService: (context) => const AddServiceScreen(),
+      earnings: (context) => const ProviderEarningsScreen(),
+      availability: (context) => const PlaceholderScreen(title: "Availability"),
     };
+  }
+}
+
+class PlaceholderScreen extends StatelessWidget {
+  final String title;
+  const PlaceholderScreen({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Center(child: Text("$title Screen\n(Development in Progress)", textAlign: TextAlign.center)),
+    );
   }
 }
