@@ -22,7 +22,7 @@ export const register = async (req: Request, res: Response) => {
       where: { 
         OR: [
           { email: normalizedEmail },
-          { phone: phone || '---' }
+          ...(phone ? [{ phone: phone }] : [])
         ]
       },
     });

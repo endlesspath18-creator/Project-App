@@ -69,15 +69,19 @@ class ApiClient {
   static ApiException? _fromStatus(int code, Map<String, dynamic> body) {
     final msg = body['message'] as String? ?? body['error'] as String? ?? 'Unknown error';
     switch (code) {
+      case 400: return ApiException(msg, statusCode: 400);
       case 401: return UnauthorizedException(msg);
-      case 403: return ApiException('Access denied.', statusCode: 403);
+      case 403: return ApiException(msg, statusCode: 403);
       case 404: return ApiException('Resource not found.', statusCode: 404);
+      case 409: return ApiException(msg, statusCode: 409);
       case 422: return ApiException(msg, statusCode: 422);
       case 429: return ApiException('Too many requests. Slow down.', statusCode: 429);
       case 500:
       case 502:
       case 503: return ServerException('Server error ($code). Please try again shortly.', statusCode: code);
-      default: return null;
+      default: 
+        if (code >= 400) return ApiException(msg, statusCode: code);
+        return null;
     }
   }
 
