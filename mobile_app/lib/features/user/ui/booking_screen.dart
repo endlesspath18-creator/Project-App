@@ -81,6 +81,25 @@ class _BookingScreenState extends State<BookingScreen> {
     _showSnackBar("External Wallet Selected: ${response.walletName}");
   }
 
+  DateTime _combineDateAndTime() {
+    final timeSplit = _selectedTimeSlot.split(" ");
+    final time = timeSplit[0].split(":");
+    int hour = int.parse(time[0]);
+    int minute = int.parse(time[1]);
+    final isPM = timeSplit[1] == "PM";
+
+    if (isPM && hour != 12) hour += 12;
+    if (!isPM && hour == 12) hour = 0;
+
+    return DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      hour,
+      minute,
+    );
+  }
+
   // ─── Booking Logic ───────────────────────────────────────────────────────
 
   void _handleBooking() async {
@@ -91,12 +110,13 @@ class _BookingScreenState extends State<BookingScreen> {
 
     final bookingProvider = context.read<BookingProvider>();
     final authProvider = context.read<AuthProvider>();
+    final combinedDate = _combineDateAndTime();
 
     if (_paymentMethod == "COD") {
       final booking = await bookingProvider.createBooking(
         serviceId: _service.id,
         address: _addressController.text.trim(),
-        scheduledDate: _selectedDate,
+        scheduledDate: combinedDate,
         notes: _notesController.text.trim(),
         paymentMethod: "COD",
       );
@@ -111,7 +131,7 @@ class _BookingScreenState extends State<BookingScreen> {
       final booking = await bookingProvider.createBooking(
         serviceId: _service.id,
         address: _addressController.text.trim(),
-        scheduledDate: _selectedDate,
+        scheduledDate: combinedDate,
         notes: _notesController.text.trim(),
         paymentMethod: "ONLINE",
       );
