@@ -15,25 +15,35 @@ const razorpay = new Razorpay({
  * User wants to book a service online.
  */
 export const createOrder = async (req: Request, res: Response) => {
-  const { serviceId } = req.body;
+  const { bookingId } = req.body;
 
   try {
-    const service = await prisma.service.findUnique({ where: { id: serviceId } });
-    if (!service) return sendError(res, 404, "Service not found");
+    const booking = await prisma.booking.findUnique({ 
+      where: { id: bookingId },
+      include: { service: true }
+    });
+    
+    if (!booking) return sendError(res, 404, "Booking not found");
 
-    const amountInPaise = Math.round(service.price * 100);
+    const amountInPaise = Math.round(Number(booking.amount) * 100);
     
     const options = {
       amount: amountInPaise,
       currency: "INR",
-      receipt: `receipt_${Date.now()}`,
+      receipt: `receipt_${booking.id.substring(0, 8)}`,
     };
 
     const order = await razorpay.orders.create(options);
 
+    // Save orderId to booking
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: { orderId: order.id }
+    });
+
     sendResponse(res, 201, "Razorpay order created", {
       orderId: order.id,
-      amount: service.price,
+      amount: Number(booking.amount),
       currency: "INR",
       key: env.RAZORPAY_KEY_ID,
     });
@@ -47,12 +57,11 @@ export const createOrder = async (req: Request, res: Response) => {
  * Step 2: Verify Payment & Create Final Booking
  */
 export const verifyPayment = async (req: Request, res: Response) => {
-  const userId = req.user!.id;
   const { 
     razorpay_order_id, 
     razorpay_payment_id, 
     razorpay_signature,
-    bookingData // Contains serviceId, dateTime, address, etc.
+    bookingId
   } = req.body;
 
   try {
@@ -67,38 +76,20 @@ export const verifyPayment = async (req: Request, res: Response) => {
       return sendError(res, 400, "Payment verification failed: Invalid signature");
     }
 
-    // 2. Signature is valid, now finalize the booking in a transaction
+    // 2. Update booking status
     const result = await prisma.$transaction(async (tx) => {
-      const service = await tx.service.findUnique({ where: { id: bookingData.serviceId } });
-      if (!service) throw new Error("SERVICE_NOT_FOUND");
-
-      const booking = await tx.booking.create({
+      const booking = await tx.booking.update({
+        where: { id: bookingId },
         data: {
-          userId,
-          serviceId: bookingData.serviceId,
-          providerId: service.providerId,
-          dateTime: new Date(bookingData.dateTime),
-          address: bookingData.address,
-          notes: bookingData.notes,
-          amount: service.price,
-          paymentMethod: "ONLINE",
           paymentStatus: "PAID",
-          status: "PENDING", // Provider still needs to ACCEPT
-          orderId: razorpay_order_id,
           paymentId: razorpay_payment_id,
         }
-      });
-
-      // Mark service as BUSY
-      await tx.service.update({
-        where: { id: service.id },
-        data: { status: "BUSY" }
       });
 
       return booking;
     });
 
-    sendResponse(res, 201, "Payment verified and booking confirmed", result);
+    sendResponse(res, 200, "Payment verified and booking confirmed", result);
   } catch (error: any) {
     console.error("Payment Verification Error:", error);
     sendError(res, 500, "Booking confirmation failed after payment");
