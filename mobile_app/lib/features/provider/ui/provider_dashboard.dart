@@ -465,7 +465,7 @@ class _SmallJobCard extends StatelessWidget {
             const Icon(Icons.circle, size: 10, color: AppColors.primary),
             const SizedBox(width: 12),
             Expanded(child: Text(booking['user']['fullName'], style: const TextStyle(fontWeight: FontWeight.w600))),
-            Text("₹${booking['totalAmount']}", style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text("₹${booking['amount']}", style: const TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -479,6 +479,9 @@ class _FullJobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isPaid = booking['paymentStatus'] == 'PAID';
+    final String method = booking['paymentMethod'] ?? 'COD';
+
     return GlassCard(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
@@ -497,15 +500,61 @@ class _FullJobCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Text("₹${booking['totalAmount']}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text("₹${booking['amount']}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isPaid ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      isPaid ? "PAID" : "UNPAID",
+                      style: TextStyle(color: isPaid ? Colors.green : Colors.orange, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(method == 'COD' ? Icons.money : Icons.account_balance_wallet, size: 14, color: AppColors.textTertiary),
+              Text(" $method", style: const TextStyle(color: AppColors.textTertiary, fontSize: 12)),
+              const Spacer(),
+              Text(booking['status'] ?? 'PENDING', style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 20),
           Row(
             children: [
-              Expanded(child: GlassButton(onPressed: () {}, text: "Reject", isPrimary: false)),
+              Expanded(
+                child: GlassButton(
+                  onPressed: () async {
+                    final success = await Provider.of<BookingProvider>(context, listen: false).updateStatus(booking['id'], 'reject');
+                    if (success && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Booking rejected")));
+                    }
+                  }, 
+                  text: "Reject", 
+                  isPrimary: false
+                )
+              ),
               const SizedBox(width: 12),
-              Expanded(child: GlassButton(onPressed: () {}, text: "Accept")),
+              Expanded(
+                child: GlassButton(
+                  onPressed: () async {
+                    final success = await Provider.of<BookingProvider>(context, listen: false).updateStatus(booking['id'], 'accept');
+                    if (success && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Booking accepted! 🎉"), backgroundColor: Colors.green));
+                    }
+                  }, 
+                  text: "Accept"
+                )
+              ),
             ],
           ),
         ],

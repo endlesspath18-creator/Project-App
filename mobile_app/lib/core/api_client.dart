@@ -167,6 +167,11 @@ class ApiClient {
 
   static ApiResponse _parseResponse(http.Response response) {
     _log('Response ${response.statusCode}: ${response.body.length} bytes');
+    
+    if (response.statusCode >= 400) {
+      _log('ERROR_BODY: ${response.body}');
+    }
+
     late Map<String, dynamic> data;
     try {
       data = jsonDecode(response.body) as Map<String, dynamic>;

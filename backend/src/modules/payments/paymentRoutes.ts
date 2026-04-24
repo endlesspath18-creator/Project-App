@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createOrder, verifyPayment } from "./paymentController";
+import { createOrder, verifyPayment, getPaymentHistory } from "./paymentController";
 import { protect } from "../../middleware/authMiddleware";
 import { requireRole } from "../../middleware/roleMiddleware";
 import { validate } from "../../middleware/validate";
@@ -13,5 +13,6 @@ router.use(requireRole("USER"));
 
 router.post("/create-order", validate(createOrderSchema), createOrder);
 router.post("/verify", validate(verifyPaymentSchema), verifyPayment);
+router.get("/history", getPaymentHistory);
 
 export default router;

@@ -48,7 +48,7 @@ class DashboardProvider with ChangeNotifier {
     _setLoading(true);
     _error = null;
     try {
-      final response = await ApiClient.get('/provider/dashboard');
+      final response = await ApiClient.get('/api/provider/dashboard');
       if (response.statusCode == 200) {
         _stats = DashboardStats.fromJson(response.data['data']);
       }

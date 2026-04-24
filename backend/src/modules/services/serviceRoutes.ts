@@ -24,7 +24,7 @@ router.use(protect);
 router.use(requireRole("PROVIDER"));
 
 router.post("/", validate(createServiceSchema), createService);
-router.get("/my-services", getMyServices);
+router.get("/my", getMyServices);
 router.put("/:id", validate(updateServiceSchema), updateService);
 router.delete("/:id", deleteService);
 

@@ -8,5 +8,5 @@ class AppConstants {
   static const String registerEndpoint = '/api/auth/register';
   static const String verifyMeEndpoint = '/api/auth/me';
   static const String servicesEndpoint = '/api/services';
-  static const String providerServicesEndpoint = '/api/services/my-services';
+  static const String providerServicesEndpoint = '/api/services/my';
 }

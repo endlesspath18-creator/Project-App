@@ -106,7 +106,7 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                               GlassInput(
                                 controller: _titleController,
                                 hintText: "e.g. Split AC Maintenance",
-                                validator: (v) => v!.isEmpty ? 'Required' : null,
+                                validator: (v) => v!.length < 3 ? 'Title must be at least 3 characters' : null,
                               ),
                               
                               const SizedBox(height: AppDimensions.s20),
@@ -121,7 +121,7 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                                 controller: _descriptionController,
                                 hintText: "Describe what's included...",
                                 keyboardType: TextInputType.multiline,
-                                validator: (v) => v!.isEmpty ? 'Required' : null,
+                                validator: (v) => v!.length < 10 ? 'Description must be at least 10 characters' : null,
                               ),
                             ],
                           ),

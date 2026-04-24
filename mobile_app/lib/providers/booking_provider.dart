@@ -31,7 +31,7 @@ class BookingProvider with ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      final response = await ApiClient.get('/bookings/me');
+      final response = await ApiClient.get('/api/bookings/my');
       if (response.statusCode == 200) {
         _userBookings = response.data['data'] as List<dynamic>;
       }
@@ -47,7 +47,7 @@ class BookingProvider with ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      final response = await ApiClient.get('/provider/requests');
+      final response = await ApiClient.get('/api/bookings/provider');
       if (response.statusCode == 200) {
         _incomingRequests = response.data['data'] as List<dynamic>;
       }
@@ -62,7 +62,8 @@ class BookingProvider with ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try {
-      final response = await ApiClient.get('/provider/active-jobs');
+      // Backend getProviderBookings returns all, we filter local if needed or just use separate
+      final response = await ApiClient.get('/api/bookings/provider');
       if (response.statusCode == 200) {
         _providerBookings = response.data['data'] as List<dynamic>;
       }
@@ -73,31 +74,80 @@ class BookingProvider with ChangeNotifier {
     }
   }
 
-  // Create a new booking
+  // Create a new booking (COD or fallback)
   Future<bool> createBooking({
     required String serviceId,
     required DateTime scheduledDate,
     required String address,
     String? notes,
+    String paymentMethod = 'COD',
   }) async {
     _setLoading(true);
     _setError(null);
     try {
-      final response = await ApiClient.post('/bookings', {
+      final response = await ApiClient.post('/api/bookings', {
         'serviceId': serviceId,
         'scheduledDate': scheduledDate.toIso8601String(),
         'address': address,
         'notes': notes,
+        'paymentMethod': paymentMethod,
+      });
+
+      if (response.statusCode == 201) return true;
+      _setError(response.data['message'] ?? 'Failed to book service');
+      return false;
+    } catch (e) {
+      _setError('$e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Razorpay: Step 1 - Create Order
+  Future<Map<String, dynamic>?> createPaymentOrder(String serviceId) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final response = await ApiClient.post('/api/payments/create-order', {
+        'serviceId': serviceId,
       });
 
       if (response.statusCode == 201) {
-        return true;
-      } else {
-        _setError(response.data['message'] ?? 'Failed to book service');
-        return false;
+        return response.data['data']; // Contains orderId, amount, key
       }
+      _setError(response.data['message'] ?? 'Failed to create payment order');
+      return null;
     } catch (e) {
-      _setError('An error occurred during booking: $e');
+      _setError('Payment Init Error: $e');
+      return null;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Razorpay: Step 2 - Verify and Finalize Booking
+  Future<bool> verifyAndConfirmBooking({
+    required String orderId,
+    required String paymentId,
+    required String signature,
+    required Map<String, dynamic> bookingData,
+  }) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final response = await ApiClient.post('/api/payments/verify', {
+        'razorpay_order_id': orderId,
+        'razorpay_payment_id': paymentId,
+        'razorpay_signature': signature,
+        'bookingData': bookingData,
+      });
+
+      if (response.statusCode == 201) return true;
+      _setError(response.data['message'] ?? 'Payment verification failed');
+      return false;
+    } catch (e) {
+      _setError('Verification Error: $e');
       return false;
     } finally {
       _setLoading(false);
@@ -110,7 +160,7 @@ class BookingProvider with ChangeNotifier {
     _setError(null);
     try {
       // Endpoint mapping: accept, reject, start, complete
-      final endpoint = '/bookings/$bookingId/$action';
+      final endpoint = '/api/bookings/$bookingId/$action';
       final response = await ApiClient.patch(endpoint, {});
 
       if (response.statusCode == 200) {

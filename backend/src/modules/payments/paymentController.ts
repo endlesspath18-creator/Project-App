@@ -1,102 +1,128 @@
 import { Request, Response } from "express";
 import { prisma } from "../../config/db";
 import { sendResponse, sendError } from "../../utils/response";
-// import crypto from "crypto";
-// import Razorpay from "razorpay";
+import crypto from "crypto";
+import Razorpay from "razorpay";
 import { env } from "../../config/env";
 
-/*
-// Placeholder initialization for Razorpay
 const razorpay = new Razorpay({
-  key_id: env.RAZORPAY_KEY_ID || "test_key",
-  key_secret: env.RAZORPAY_KEY_SECRET || "test_secret",
+  key_id: env.RAZORPAY_KEY_ID || "rzp_test_placeholder",
+  key_secret: env.RAZORPAY_KEY_SECRET || "razor_secret_placeholder",
 });
-*/
 
+/**
+ * Step 1: Create Razorpay Order
+ * User wants to book a service online.
+ */
 export const createOrder = async (req: Request, res: Response) => {
-  const userId = req.user!.id;
-  const { bookingId } = req.body;
+  const { serviceId } = req.body;
 
-  const booking = await prisma.booking.findUnique({
-    where: { id: bookingId },
-  });
+  try {
+    const service = await prisma.service.findUnique({ where: { id: serviceId } });
+    if (!service) return sendError(res, 404, "Service not found");
 
-  if (!booking) return sendError(res, 404, "Booking not found");
-  if (booking.userId !== userId) return sendError(res, 403, "Not authorized");
-  if (booking.status !== "ACCEPTED" && booking.status !== "PENDING") {
-    return sendError(res, 400, "Booking cannot be paid in current status");
+    const amountInPaise = Math.round(service.price * 100);
+    
+    const options = {
+      amount: amountInPaise,
+      currency: "INR",
+      receipt: `receipt_${Date.now()}`,
+    };
+
+    const order = await razorpay.orders.create(options);
+
+    sendResponse(res, 201, "Razorpay order created", {
+      orderId: order.id,
+      amount: service.price,
+      currency: "INR",
+      key: env.RAZORPAY_KEY_ID,
+    });
+  } catch (error: any) {
+    console.error("Razorpay Order Error:", error);
+    sendError(res, 500, "Failed to create payment order");
   }
-
-  // Placeholder logic for creating an order with Razorpay
-  const amountInPaise = Math.round(booking.totalAmount * 100);
-  
-  /*
-  const options = {
-    amount: amountInPaise,
-    currency: "INR",
-    receipt: `receipt_order_${booking.id}`,
-    payment_capture: 1,
-  };
-  const order = await razorpay.orders.create(options);
-  */
-
-  // Mocking order creation for placeholder
-  const mockOrderId = `order_${Math.random().toString(36).substring(7)}`;
-
-  await prisma.payment.create({
-    data: {
-      bookingId,
-      amount: booking.totalAmount,
-      method: "RAZORPAY",
-      status: "CREATED",
-      gatewayOrderId: mockOrderId,
-    }
-  });
-
-  sendResponse(res, 201, "Payment order created", {
-    orderId: mockOrderId,
-    amount: booking.totalAmount,
-    currency: "INR",
-    key: env.RAZORPAY_KEY_ID,
-  });
 };
 
+/**
+ * Step 2: Verify Payment & Create Final Booking
+ */
 export const verifyPayment = async (req: Request, res: Response) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, bookingId } = req.body;
+  const userId = req.user!.id;
+  const { 
+    razorpay_order_id, 
+    razorpay_payment_id, 
+    razorpay_signature,
+    bookingData // Contains serviceId, dateTime, address, etc.
+  } = req.body;
 
-  /*
-  // Real signature verification
-  const body = razorpay_order_id + "|" + razorpay_payment_id;
-  const expectedSignature = crypto
-    .createHmac("sha256", env.RAZORPAY_KEY_SECRET!)
-    .update(body.toString())
-    .digest("hex");
+  try {
+    // 1. Verify Signature
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac("sha256", env.RAZORPAY_KEY_SECRET || "razor_secret_placeholder")
+      .update(body.toString())
+      .digest("hex");
 
-  if (expectedSignature !== razorpay_signature) {
-    return sendError(res, 400, "Invalid payment signature");
-  }
-  */
+    if (expectedSignature !== razorpay_signature) {
+      return sendError(res, 400, "Payment verification failed: Invalid signature");
+    }
 
-  // Placeholder logic: assume verification passes
-  const isValid = true; 
+    // 2. Signature is valid, now finalize the booking in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      const service = await tx.service.findUnique({ where: { id: bookingData.serviceId } });
+      if (!service) throw new Error("SERVICE_NOT_FOUND");
 
-  if (isValid) {
-    await prisma.$transaction(async (tx) => {
-      await tx.payment.update({
-        where: { bookingId },
+      const booking = await tx.booking.create({
         data: {
-          status: "SUCCESS",
-          gatewayPaymentId: razorpay_payment_id,
+          userId,
+          serviceId: bookingData.serviceId,
+          providerId: service.providerId,
+          dateTime: new Date(bookingData.dateTime),
+          address: bookingData.address,
+          notes: bookingData.notes,
+          amount: service.price,
+          paymentMethod: "ONLINE",
+          paymentStatus: "PAID",
+          status: "PENDING", // Provider still needs to ACCEPT
+          orderId: razorpay_order_id,
+          paymentId: razorpay_payment_id,
         }
       });
 
-      // Optionally, change booking status to something else if needed, 
-      // but usually wait for provider to start/complete.
-      // await tx.booking.update({ where: { id: bookingId }, data: { status: "ACCEPTED" } });
+      // Mark service as BUSY
+      await tx.service.update({
+        where: { id: service.id },
+        data: { status: "BUSY" }
+      });
+
+      return booking;
     });
 
-    return sendResponse(res, 200, "Payment verified successfully", { bookingId });
+    sendResponse(res, 201, "Payment verified and booking confirmed", result);
+  } catch (error: any) {
+    console.error("Payment Verification Error:", error);
+    sendError(res, 500, "Booking confirmation failed after payment");
   }
+};
 
-  sendError(res, 400, "Verification failed");
+/**
+ * Fetch Payment/Booking History for authenticated user
+ */
+export const getPaymentHistory = async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+
+  const history = await prisma.booking.findMany({
+    where: { 
+      userId,
+      paymentMethod: "ONLINE",
+      paymentStatus: "PAID"
+    },
+    include: {
+      service: { select: { title: true, category: true } },
+      provider: { select: { fullName: true } }
+    },
+    orderBy: { createdAt: "desc" }
+  });
+
+  sendResponse(res, 200, "Payment history fetched", history);
 };

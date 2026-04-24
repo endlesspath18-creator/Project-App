@@ -24,10 +24,12 @@ export const createBooking = async (req: Request, res: Response) => {
           userId,
           providerId: service.providerId,
           serviceId,
-          scheduledDate: new Date(scheduledDate),
+          dateTime: new Date(scheduledDate), // Use scheduledDate from body as dateTime
           address,
           notes,
-          totalAmount: service.price,
+          amount: service.price,
+          paymentMethod: req.body.paymentMethod || "COD",
+          paymentStatus: req.body.paymentStatus || "PENDING",
           status: "PENDING",
         }
       });
