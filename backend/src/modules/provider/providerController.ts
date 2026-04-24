@@ -19,7 +19,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         status: "COMPLETED" 
       },
       _sum: {
-        totalAmount: true
+        amount: true
       }
     });
 
@@ -38,7 +38,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const completedCount = profile.totalJobs;
 
     sendResponse(res, 200, "Dashboard stats fetched", {
-      earnings: earnings._sum.totalAmount || 0,
+      earnings: earnings._sum?.amount || 0,
       completedJobs: completedCount,
       pendingRequests: pendingCount,
       activeJobs: activeCount,
@@ -103,7 +103,7 @@ export const getActiveJobs = async (req: Request, res: Response) => {
         }
       }
     },
-    orderBy: { scheduledDate: "asc" }
+    orderBy: { dateTime: "asc" }
   });
 
   sendResponse(res, 200, "Active jobs fetched", jobs);
