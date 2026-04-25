@@ -74,6 +74,12 @@ export const createService = async (req: Request, res: Response) => {
   const providerId = req.user!.id;
   const { title, category, description, price, durationMinutes, images } = req.body;
 
+  // Check if provider has paid activation fee
+  const provider = await prisma.user.findUnique({ where: { id: providerId } });
+  if (!provider?.canPublishService) {
+    return sendError(res, 403, "Please pay the activation fee to publish services");
+  }
+
   const newService = await prisma.service.create({
     data: {
       providerId,

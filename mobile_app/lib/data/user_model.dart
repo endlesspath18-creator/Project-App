@@ -7,6 +7,9 @@ class UserModel {
   final String? businessName;
   final String? phone;
 
+  final bool hasPaidPublishingFee;
+  final bool canPublishService;
+
   UserModel({
     required this.id,
     required this.email,
@@ -15,6 +18,8 @@ class UserModel {
     this.isRoleSet = true,
     this.businessName,
     this.phone,
+    this.hasPaidPublishingFee = false,
+    this.canPublishService = false,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -23,9 +28,11 @@ class UserModel {
       email: json['email'] ?? '',
       fullName: json['fullName'] ?? '',
       role: json['role'] ?? 'USER',
-      isRoleSet: json['isRoleSet'] == true, // Strict boolean check, defaults to false if missing
+      isRoleSet: json['isRoleSet'] == true,
       businessName: json['businessName'] ?? json['providerProfile']?['businessName'],
       phone: json['phone'],
+      hasPaidPublishingFee: json['hasPaidPublishingFee'] == true,
+      canPublishService: json['canPublishService'] == true,
     );
   }
 
@@ -38,6 +45,8 @@ class UserModel {
       'isRoleSet': isRoleSet,
       'businessName': businessName,
       'phone': phone,
+      'hasPaidPublishingFee': hasPaidPublishingFee,
+      'canPublishService': canPublishService,
     };
   }
 }

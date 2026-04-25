@@ -8,6 +8,7 @@ import 'package:mobile_app/core/design_system.dart';
 import 'package:mobile_app/core/app_dimensions.dart';
 import 'package:mobile_app/widgets/glass_widgets.dart';
 import 'package:mobile_app/features/profile/ui/profile_screen.dart';
+import 'package:mobile_app/features/admin/ui/admin_finance_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -56,8 +57,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildBody() {
     if (_currentIndex == 0) return _buildOverview();
+    if (_currentIndex == 1) return const _UserManagementList(role: 'USER');
+    if (_currentIndex == 2) return const _UserManagementList(role: 'PROVIDER');
+    if (_currentIndex == 3) return const AdminFinanceScreen();
     if (_currentIndex == 4) return const ProfileScreen();
-    return _buildManagementView();
+    return const Center(child: Text("Error"));
   }
 
   Widget _buildOverview() {
@@ -103,7 +107,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   _buildStatCard("Providers", "${_stats!['totalProviders']}", Icons.business_center_outlined, Colors.purple),
                   _buildStatCard("Bookings", "${_stats!['totalBookings']}", Icons.calendar_today_rounded, Colors.orange),
                   _buildStatCard("Revenue", "₹${_stats!['totalRevenue'].toInt()}", Icons.account_balance_wallet_outlined, Colors.green),
-                  _buildStatCard("Services", "${_stats!['totalServices']}", Icons.home_repair_service_outlined, Colors.teal),
                 ]),
               ),
             ),
@@ -144,12 +147,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildManagementView() {
-    switch (_currentIndex) {
-      case 1: return const _UserManagementList(role: 'USER');
-      case 2: return const _UserManagementList(role: 'PROVIDER');
-      case 3: return const _BookingManagementList();
-      default: return const Center(child: Text("Coming Soon"));
-    }
+    // This function is now superseded by _buildBody directly
+    return const SizedBox();
   }
 
   Widget _buildBottomNav() {
@@ -166,7 +165,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             _buildNavItem(Icons.analytics_outlined, Icons.analytics_rounded, "Stats", 0),
             _buildNavItem(Icons.people_outline_rounded, Icons.people_alt_rounded, "Users", 1),
             _buildNavItem(Icons.business_center_outlined, Icons.business_center_rounded, "Pros", 2),
-            _buildNavItem(Icons.receipt_long_outlined, Icons.receipt_long_rounded, "Logs", 3),
+            _buildNavItem(Icons.payments_outlined, Icons.payments_rounded, "Finance", 3),
             _buildNavItem(Icons.person_outline, Icons.person, "Profile", 4),
           ],
         ),

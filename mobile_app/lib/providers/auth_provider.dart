@@ -129,6 +129,23 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // ─── Refresh User Data ──────────────────────────────────────────────────
+  Future<void> refreshUser() async {
+    try {
+      final response = await ApiClient.get(AppConstants.verifyMeEndpoint);
+      Map<String, dynamic> rawUser;
+      if (response.data['data'] != null && response.data['data'] is Map<String, dynamic>) {
+        rawUser = response.data['data'] as Map<String, dynamic>;
+      } else {
+        rawUser = response.data['user'] ?? response.data;
+      }
+      _user = UserModel.fromJson(rawUser);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('REFRESH_USER_ERROR: $e');
+    }
+  }
+
   // ─── Logout ────────────────────────────────────────────────────────────────
   Future<void> logout() async {
     await StorageService.deleteToken();

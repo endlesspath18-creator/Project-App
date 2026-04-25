@@ -17,12 +17,12 @@ class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,
     required this.child,
-    this.blur = 20.0,
+    this.blur = 30.0,
     this.width,
     this.height,
     this.padding,
     this.margin,
-    this.borderRadius = AppDimensions.r24,
+    this.borderRadius = 28.0,
     this.color,
     this.border,
   });
@@ -33,7 +33,7 @@ class GlassCard extends StatelessWidget {
       margin: margin,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: const [AppShadows.soft],
+        boxShadow: const [AppShadows.card],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
@@ -42,12 +42,12 @@ class GlassCard extends StatelessWidget {
           child: Container(
             width: width,
             height: height,
-            padding: padding ?? const EdgeInsets.all(AppDimensions.s20),
+            padding: padding ?? const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: color ?? AppColors.glassBackground,
               borderRadius: BorderRadius.circular(borderRadius),
               border: border ?? Border.all(
-                color: AppColors.primary.withValues(alpha: 0.08),
+                color: AppColors.primary.withValues(alpha: 0.05),
                 width: 1.5,
               ),
             ),
@@ -82,26 +82,26 @@ class GlassButton extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       width: width ?? double.infinity,
-      height: 58,
+      height: 60,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: isLoading ? null : onPressed,
-          borderRadius: BorderRadius.circular(AppDimensions.r16),
+          borderRadius: BorderRadius.circular(18),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s24),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppDimensions.r16),
+              borderRadius: BorderRadius.circular(18),
               gradient: isPrimary ? AppGradients.primary : null,
-              color: isPrimary ? null : AppColors.surfaceVariant,
+              color: isPrimary ? null : Colors.white,
               border: !isPrimary ? Border.all(color: AppColors.border) : null,
               boxShadow: isPrimary ? [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.25),
+                  color: AppColors.primary.withValues(alpha: 0.15),
                   blurRadius: 20,
-                  offset: const Offset(0, 8),
+                  offset: const Offset(0, 10),
                 )
-              ] : null,
+              ] : [AppShadows.soft],
             ),
             child: Center(
               child: isLoading
@@ -117,8 +117,8 @@ class GlassButton extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (icon != null) ...[
-                          Icon(icon, color: Colors.white, size: 20),
-                          const SizedBox(width: AppDimensions.s12),
+                          Icon(icon, color: isPrimary ? Colors.white : AppColors.primary, size: 20),
+                          const SizedBox(width: 12),
                         ],
                         Text(
                           text,
@@ -126,7 +126,7 @@ class GlassButton extends StatelessWidget {
                             color: isPrimary ? Colors.white : AppColors.textPrimary,
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            letterSpacing: 0.5,
+                            fontFamily: 'Outfit',
                           ),
                         ),
                       ],
@@ -135,34 +135,6 @@ class GlassButton extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class ResponsiveLayout extends StatelessWidget {
-  final Widget mobile;
-  final Widget? tablet;
-  final Widget desktop;
-
-  const ResponsiveLayout({
-    super.key,
-    required this.mobile,
-    this.tablet,
-    required this.desktop,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth >= AppDimensions.tabletBreakpoint) {
-          return desktop;
-        } else if (constraints.maxWidth >= AppDimensions.mobileBreakpoint) {
-          return tablet ?? mobile;
-        } else {
-          return mobile;
-        }
-      },
     );
   }
 }
@@ -197,8 +169,8 @@ class GlassInput extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.r16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.border),
         boxShadow: const [AppShadows.soft],
       ),
@@ -209,11 +181,11 @@ class GlassInput extends StatelessWidget {
         enabled: enabled,
         validator: validator,
         onChanged: onChanged,
-        style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
+        style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontFamily: 'Outfit'),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: const TextStyle(color: AppColors.textTertiary, fontSize: 15),
-          prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: AppColors.primary.withValues(alpha: 0.7), size: 22) : null,
+          hintStyle: const TextStyle(color: AppColors.textTertiary, fontSize: 15, fontFamily: 'Outfit'),
+          prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: AppColors.primary, size: 22) : null,
           suffixIcon: suffixIcon != null 
             ? InkWell(
                 onTap: onSuffixIconTap,
@@ -223,19 +195,21 @@ class GlassInput extends StatelessWidget {
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.r16),
-            borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            borderRadius: BorderRadius.circular(18),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.r16),
+            borderRadius: BorderRadius.circular(18),
             borderSide: const BorderSide(color: AppColors.error, width: 1.5),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: AppDimensions.s20, vertical: AppDimensions.s16),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
         ),
       ),
     );
   }
 }
+
+
 
 class AppSectionLabel extends StatelessWidget {
   final String label;
@@ -252,17 +226,17 @@ class AppSectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s24, vertical: AppDimensions.s16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
             style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
-              letterSpacing: 0.5,
+              fontFamily: 'Outfit',
             ),
           ),
           if (onAction != null)
@@ -270,62 +244,10 @@ class AppSectionLabel extends StatelessWidget {
               onPressed: onAction,
               child: Text(
                 actionLabel ?? "See All",
-                style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
+                style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontFamily: 'Outfit'),
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class LoadingSkeleton extends StatefulWidget {
-  final double width;
-  final double height;
-  final double borderRadius;
-
-  const LoadingSkeleton({
-    super.key,
-    this.width = double.infinity,
-    this.height = 20,
-    this.borderRadius = 8,
-  });
-
-  @override
-  State<LoadingSkeleton> createState() => _LoadingSkeletonState();
-}
-
-class _LoadingSkeletonState extends State<LoadingSkeleton> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    )..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0.4, end: 0.8).animate(_controller);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) => Container(
-        width: widget.width,
-        height: widget.height,
-        decoration: BoxDecoration(
-          color: AppColors.surfaceVariant.withValues(alpha: _animation.value),
-          borderRadius: BorderRadius.circular(widget.borderRadius),
-        ),
       ),
     );
   }

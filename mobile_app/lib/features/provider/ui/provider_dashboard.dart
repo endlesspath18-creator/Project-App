@@ -9,6 +9,7 @@ import 'package:mobile_app/core/app_routes.dart';
 import 'package:mobile_app/core/design_system.dart';
 import 'package:mobile_app/core/app_dimensions.dart';
 import 'package:mobile_app/features/profile/ui/profile_screen.dart';
+import 'package:mobile_app/widgets/glass_widgets.dart';
 
 class ProviderDashboard extends StatefulWidget {
   const ProviderDashboard({super.key});
@@ -61,7 +62,14 @@ class _ProviderDashboardState extends State<ProviderDashboard> {
         ),
         bottomNavigationBar: _buildBottomNav(context),
         floatingActionButton: _currentIndex == 1 ? FloatingActionButton.extended(
-          onPressed: () => Navigator.pushNamed(context, AppRoutes.addService),
+          onPressed: () {
+            final user = Provider.of<AuthProvider>(context, listen: false).user;
+            if (user?.hasPaidPublishingFee == true) {
+              Navigator.pushNamed(context, AppRoutes.addService);
+            } else {
+              Navigator.pushNamed(context, AppRoutes.providerActivation);
+            }
+          },
           backgroundColor: AppColors.primary,
           icon: const Icon(Icons.add_rounded, color: Colors.white),
           label: const Text("Add Service", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -174,12 +182,30 @@ class _DashboardOverviewTabState extends State<_DashboardOverviewTab> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text("WELCOME BACK,", style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                              const SizedBox(height: 4),
-                              Text(user?.businessName ?? "Business Name", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                            ],
+                                const Text("WELCOME BACK,", style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Text(user?.businessName ?? "Business Name", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                                    if (user?.hasPaidPublishingFee == true) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
+                                        child: const Row(
+                                          children: [
+                                            Icon(Icons.verified_rounded, color: Colors.blue, size: 10),
+                                            SizedBox(width: 4),
+                                            Text("ACTIVATED", style: TextStyle(color: Colors.blue, fontSize: 8, fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
                         _buildStatusToggle(dashProvider),
                       ],
                     ),
@@ -229,7 +255,7 @@ class _DashboardOverviewTabState extends State<_DashboardOverviewTab> {
                   ),
                 ),
 
-                const SliverToBoxAdapter(child: AppSectionLabel(label: "Recent Activity")),
+                SliverToBoxAdapter(child: AppSectionLabel(label: "Recent Activity")),
                 
                 Consumer<BookingProvider>(
                   builder: (context, prov, _) {
@@ -247,7 +273,7 @@ class _DashboardOverviewTabState extends State<_DashboardOverviewTab> {
                     );
                   }
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                SliverToBoxAdapter(child: SizedBox(height: 100)),
               ],
             ),
           ),
@@ -446,7 +472,7 @@ class _EarningsTab extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-            const AppSectionLabel(label: "Recent Transactions"),
+            AppSectionLabel(label: "Recent Transactions"),
             Expanded(
               child: ListView.builder(
                 itemCount: 5,

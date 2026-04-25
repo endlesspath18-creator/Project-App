@@ -69,6 +69,22 @@ class ServiceProvider extends ChangeNotifier {
     }
   }
 
+  final List<String> _favoriteIds = [];
+  List<String> get favoriteIds => _favoriteIds;
+
+  bool isFavorite(String serviceId) => _favoriteIds.contains(serviceId);
+
+  void toggleFavorite(String serviceId) {
+    if (_favoriteIds.contains(serviceId)) {
+      _favoriteIds.remove(serviceId);
+    } else {
+      _favoriteIds.add(serviceId);
+    }
+    notifyListeners();
+  }
+
+  List<ServiceModel> get favoriteServices => _services.where((s) => _favoriteIds.contains(s.id)).toList();
+
   // ─── Add New Service ───────────────────────────────────────────────────────
   Future<bool> addService(ServiceModel service) async {
     _setLoading(true);

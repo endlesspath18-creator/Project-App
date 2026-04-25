@@ -10,26 +10,27 @@ class AppTheme {
       colorScheme: ColorScheme.light(
         primary: AppColors.primary,
         onPrimary: Colors.white,
-        secondary: AppColors.secondary,
+        secondary: AppColors.accent,
         onSecondary: Colors.white,
         surface: AppColors.surface,
         onSurface: AppColors.textPrimary,
         error: AppColors.error,
+        primaryContainer: AppColors.primaryContainer,
       ),
       scaffoldBackgroundColor: AppColors.background,
       dividerColor: AppColors.divider,
       
-      // Modern Typography using Inter
-      textTheme: GoogleFonts.interTextTheme().copyWith(
-        displayLarge: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-        headlineLarge: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-        headlineMedium: GoogleFonts.inter(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-        titleLarge: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        bodyLarge: GoogleFonts.inter(color: AppColors.textPrimary),
-        bodyMedium: GoogleFonts.inter(color: AppColors.textSecondary),
+      // Modern & Premium Typography using Outfit
+      textTheme: GoogleFonts.outfitTextTheme().copyWith(
+        displayLarge: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+        headlineLarge: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppColors.textPrimary, fontSize: 32),
+        headlineMedium: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        titleLarge: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: AppColors.textPrimary, fontSize: 20),
+        bodyLarge: GoogleFonts.outfit(color: AppColors.textPrimary, fontSize: 16),
+        bodyMedium: GoogleFonts.outfit(color: AppColors.textSecondary, fontSize: 14),
       ),
 
-      // AppBar Theme
+      // AppBar Theme - Clean & Minimal
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -38,22 +39,23 @@ class AppTheme {
         titleTextStyle: TextStyle(
           color: AppColors.textPrimary,
           fontSize: 20,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
+          fontFamily: 'Outfit',
         ),
       ),
 
-      // Card Theme
+      // Card Theme - Soft & Modern
       cardTheme: const CardThemeData(
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(24))),
         color: AppColors.surface,
         margin: EdgeInsets.zero,
       ),
 
-      // Input Decoration
+      // Input Decoration - Minimal & High Readability
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceVariant.withValues(alpha: 0.5),
+        fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.border),
@@ -64,21 +66,21 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        hintStyle: const TextStyle(color: AppColors.textTertiary, fontSize: 15),
       ),
 
-      // Button Themes
+      // Button Themes - Bold & Premium
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 56),
+          minimumSize: const Size(double.infinity, 58),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          elevation: 2,
-          shadowColor: AppColors.primary.withValues(alpha: 0.3),
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+          elevation: 0,
+          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, fontFamily: 'Outfit'),
         ),
       ),
       
@@ -86,15 +88,28 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
-          minimumSize: const Size(double.infinity, 56),
+          minimumSize: const Size(double.infinity, 58),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          side: const BorderSide(color: AppColors.primary),
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 16),
+          side: const BorderSide(color: AppColors.primary, width: 1.5),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, fontFamily: 'Outfit'),
         ),
+      ),
+
+      // Icon Theme
+      iconTheme: const IconThemeData(
+        color: AppColors.primary,
+        size: 24,
+      ),
+
+      // Premium Page Transitions
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
       ),
     );
   }
 
-  // Maintaining dark for compatibility if requested, but pointing to light
   static ThemeData get dark => light;
 }

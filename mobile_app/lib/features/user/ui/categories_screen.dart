@@ -3,6 +3,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:mobile_app/core/design_system.dart';
 import 'package:mobile_app/core/app_dimensions.dart';
 import 'package:mobile_app/widgets/glass_widgets.dart';
+import 'package:mobile_app/core/app_routes.dart';
 
 class CategoriesScreen extends StatelessWidget {
   const CategoriesScreen({super.key});
@@ -49,7 +50,13 @@ class CategoriesScreen extends StatelessWidget {
                 return FadeInUp(
                   delay: Duration(milliseconds: 50 * index),
                   child: GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context, 
+                        AppRoutes.search, 
+                        arguments: cat['name']
+                      );
+                    },
                     child: GlassCard(
                       padding: const EdgeInsets.all(AppDimensions.s16),
                       child: Column(

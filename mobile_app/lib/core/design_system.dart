@@ -1,35 +1,35 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Brand Color
-  static const Color primary = Color(0xFFE04000);
-  static const Color primaryLight = Color(0xFFFFF0EB);
-  static const Color primaryDark = Color(0xFFB33300);
-  static const Color primaryContainer = Color(0xFFFFF0EB);
+  // Core Brand Identity - Deep Teal
+  static const Color primary = Color(0xFF045F56);
+  static const Color primaryLight = Color(0xFFE6F2F1); // Light Teal Tint
+  static const Color primaryDark = Color(0xFF03443D);
+  static const Color primaryContainer = Color(0xFFF0F7F6);
   
-  // Base Colors
-  static const Color background = Color(0xFFFDF9F8);
+  // Clean Premium Palette
+  static const Color background = Color(0xFFFAFAFA); // Soft warm white
   static const Color surface = Colors.white;
-  static const Color surfaceVariant = Color(0xFFFBECE8);
+  static const Color surfaceVariant = Color(0xFFF5F8F8);
   
-  // Text Colors
-  static const Color textPrimary = Color(0xFF1E293B);
-  static const Color textSecondary = Color(0xFF475569);
-  static const Color textTertiary = Color(0xFF94A3B8);
+  // Typography - High Contrast & Readability
+  static const Color textPrimary = Color(0xFF1A1A1A);   // Deep Charcoal
+  static const Color textSecondary = Color(0xFF666666); // Muted Gray
+  static const Color textTertiary = Color(0xFF999999);
   
-  // Interaction Colors
-  static const Color secondary = Color(0xFF475569); 
-  static const Color tertiary = Color(0xFFC2410C);  
-  static const Color error = Color(0xFFDC2626);
-  static const Color warning = Color(0xFFEA580C);
+  // Status Colors
+  static const Color success = Color(0xFF10B981);
+  static const Color error = Color(0xFFEF4444);
+  static const Color warning = Color(0xFFF59E0B);
   
-  // Grays / Borders
-  static const Color border = Color(0xFFE2E8F0);
-  static const Color divider = Color(0xFFF1F5F9);
+  // Accent & Borders
+  static const Color accent = Color(0xFF019FAD); // Secondary Teal
+  static const Color border = Color(0xFFE5E7EB);
+  static const Color divider = Color(0xFFF3F4F6);
 
-  // Utility
-  static const Color glassBackground = Color.fromRGBO(255, 255, 255, 0.85);
-  static const Color glassBorder = Color.fromRGBO(224, 64, 0, 0.15);
+  // Design Tokens
+  static const Color glassBackground = Color.fromRGBO(255, 255, 255, 0.95);
+  static const Color glassBorder = Color.fromRGBO(4, 95, 86, 0.1);
 }
 
 class AppGradients {
@@ -37,8 +37,8 @@ class AppGradients {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFFE04000),
-      Color(0xFFFF6B2B),
+      Color(0xFF045F56),
+      Color(0xFF067D71),
     ],
   );
 
@@ -46,8 +46,8 @@ class AppGradients {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [
-      Color(0xFFFDF9F8),
-      Color(0xFFFBECE8),
+      Color(0xFFFAFAFA),
+      Color(0xFFF5F8F8),
     ],
   );
 
@@ -55,8 +55,17 @@ class AppGradients {
     center: Alignment(0.8, -0.6),
     radius: 1.2,
     colors: [
-      Color(0xFFFFF0EB),
-      Color(0xFFFDF9F8),
+      Color(0xFFE6F2F1),
+      Color(0xFFFAFAFA),
+    ],
+  );
+  
+  static const LinearGradient premium = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF045F56),
+      Color(0xFF019FAD),
     ],
   );
 }
@@ -65,13 +74,18 @@ class AppShadows {
   static const BoxShadow soft = BoxShadow(
     color: Color.fromRGBO(0, 0, 0, 0.04),
     blurRadius: 20,
-    offset: Offset(0, 8),
+    offset: Offset(0, 4),
   );
   
-  static const BoxShadow card = BoxShadow(
-    color: Color.fromRGBO(224, 64, 0, 0.08),
+  static const BoxShadow premium = BoxShadow(
+    color: Color.fromRGBO(4, 95, 86, 0.08),
     blurRadius: 30,
-    offset: Offset(0, 8),
+    offset: Offset(0, 10),
+  );
+
+  static const BoxShadow card = BoxShadow(
+    color: Color.fromRGBO(0, 0, 0, 0.03),
+    blurRadius: 15,
+    offset: Offset(0, 6),
   );
 }
-

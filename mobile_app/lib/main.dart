@@ -12,6 +12,7 @@ import 'package:mobile_app/providers/dashboard_provider.dart';
 
 import 'package:mobile_app/features/auth/ui/auth_wrapper.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -43,7 +44,7 @@ class MyApp extends StatelessWidget {
         title: AppConstants.appName,
         theme: AppTheme.light,
         themeMode: ThemeMode.light,
-        home: const AuthWrapper(),
+        initialRoute: AppRoutes.splash,
         routes: AppRoutes.getRoutes(),
         debugShowCheckedModeBanner: false,
       ),

@@ -151,7 +151,7 @@ export const login = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error("[AuthController] FATAL_LOGIN_ERROR:", error);
-    return sendError(res, 500, "Internal server error during login.");
+    return sendError(res, 500, `Internal server error: ${error.message}`);
   }
 };
 

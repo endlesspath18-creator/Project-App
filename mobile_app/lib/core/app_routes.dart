@@ -16,14 +16,19 @@ import 'package:mobile_app/features/provider/ui/provider_dashboard.dart';
 import 'package:mobile_app/features/provider/ui/add_service_screen.dart';
 import 'package:mobile_app/features/provider/ui/provider_earnings_screen.dart';
 import 'package:mobile_app/features/provider/ui/provider_services_screen.dart';
+import 'package:mobile_app/features/provider/ui/provider_activation_screen.dart';
 import 'package:mobile_app/features/profile/ui/profile_screen.dart';
+import 'package:mobile_app/features/splash/ui/motion_splash.dart';
+import 'package:mobile_app/features/admin/ui/admin_dashboard.dart';
 
 class AppRoutes {
+  static const String splash = '/';
   static const String welcome = '/welcome';
   static const String login = '/login';
   static const String signup = '/signup';
   static const String forgotPassword = '/forgotPassword';
   static const String otp = '/otp';
+  static const String adminHome = '/adminHome';
   
   // User Panel
   static const String userHome = '/userHome';
@@ -45,10 +50,12 @@ class AppRoutes {
   static const String addService = '/addService';
   static const String earnings = '/earnings';
   static const String providerServices = '/providerServices';
+  static const String providerActivation = '/providerActivation';
   static const String availability = '/availability';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return {
+      splash: (context) => const ServiceMotionSplash(),
       welcome: (context) => const WelcomeScreen(),
       login: (context) => const LoginScreen(),
       signup: (context) => const SignupScreen(),
@@ -74,7 +81,11 @@ class AppRoutes {
       addService: (context) => const AddServiceScreen(),
       earnings: (context) => const ProviderEarningsScreen(),
       providerServices: (context) => const ProviderServicesScreen(),
+      providerActivation: (context) => const ProviderActivationScreen(),
       availability: (context) => const PlaceholderScreen(title: "Availability"),
+
+      // Admin Screens
+      adminHome: (context) => const AdminDashboard(),
     };
   }
 }
