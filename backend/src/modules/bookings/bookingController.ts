@@ -358,27 +358,30 @@ export const getUserDashboardData = async (req: Request, res: Response) => {
     const [activeBookings, stats, totalSpent] = await Promise.all([
       // 1. Active Bookings (Confirmed/In Progress)
       prisma.booking.findMany({
-        where: { userId, status: { in: [" CONFIRMED\, \IN_PROGRESS\] } },
- include: { provider: { select: { fullName: true } }, service: { select: { title: true, images: true } } },
- orderBy: { dateTime: \asc\ }
- }),
- // 2. Completed Count
- prisma.booking.count({ where: { userId, status: \COMPLETED\ } }),
- // 3. Total Spent
- prisma.booking.aggregate({
- where: { userId, status: \COMPLETED\ },
- _sum: { amount: true }
- })
- ]);
+        where: { userId, status: { in: ["CONFIRMED", "IN_PROGRESS"] } },
+        include: { 
+          provider: { select: { fullName: true } }, 
+          service: { select: { title: true, images: true } } 
+        },
+        orderBy: { dateTime: "asc" }
+      }),
+      // 2. Completed Count
+      prisma.booking.count({ where: { userId, status: "COMPLETED" } }),
+      // 3. Total Spent
+      prisma.booking.aggregate({
+        where: { userId, status: "COMPLETED" },
+        _sum: { amount: true }
+      })
+    ]);
 
- sendResponse(res, 200, \User dashboard data fetched\, {
- activeBookings,
- completedCount: stats,
- totalSpent: totalSpent._sum.amount || 0,
- nextJob: activeBookings[0] || null
- });
- } catch (error) {
- console.error(\User Dashboard Error:\, error);
- sendError(res, 500, \Failed to fetch dashboard data\);
- }
+    sendResponse(res, 200, "User dashboard data fetched", {
+      activeBookings,
+      completedCount: stats,
+      totalSpent: totalSpent._sum.amount || 0,
+      nextJob: activeBookings[0] || null
+    });
+  } catch (error) {
+    console.error("User Dashboard Error:", error);
+    sendError(res, 500, "Failed to fetch dashboard data");
+  }
 };
