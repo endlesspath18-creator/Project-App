@@ -4,6 +4,7 @@ import {
   getUserBookings,
   getProviderBookings,
   getProviderDashboardData,
+  getUserDashboardData,
   confirmPayment,
   completeBooking,
   handlePaymentWebhook
@@ -25,6 +26,7 @@ router.use(protect);
 
 // User Routes
 router.post("/", requireRole("USER"), validate(createBookingSchema), createBooking);
+router.get("/user/dashboard", requireRole("USER"), getUserDashboardData);
 router.get("/my", requireRole("USER"), getUserBookings);
 router.post("/confirm-payment", requireRole("USER"), confirmPayment);
 

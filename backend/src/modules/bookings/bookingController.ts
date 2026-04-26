@@ -96,7 +96,9 @@ export const createBooking = async (req: Request, res: Response) => {
     if (error.message === "SERVICE_NOT_FOUND") return sendError(res, 404, "Service not found");
     if (error.message === "SERVICE_INACTIVE") return sendError(res, 400, "This service is currently disabled");
     if (error.message === "PROVIDER_BUSY") return sendError(res, 409, "Provider is already booked for this time slot");
-    if (error.message === "RAZORPAY_ORDER_FAILED") return sendError(res, 502, "Failed to connect to payment gateway");
+    if (error.message === "RAZORPAY_ORDER_FAILED") {
+       return sendError(res, 502, "Failed to connect to payment gateway. Please verify RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in Render environment variables.");
+    }
     
     console.error("Booking Error:", error);
     sendError(res, 500, "Failed to initiate booking");
@@ -344,4 +346,39 @@ export const completeBooking = async (req: Request, res: Response) => {
   } catch (error) {
     sendError(res, 500, "Failed to complete job");
   }
+};
+
+/**
+ * User Dashboard Data aggregator.
+ */
+export const getUserDashboardData = async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+
+  try {
+    const [activeBookings, stats, totalSpent] = await Promise.all([
+      // 1. Active Bookings (Confirmed/In Progress)
+      prisma.booking.findMany({
+        where: { userId, status: { in: [" CONFIRMED\, \IN_PROGRESS\] } },
+ include: { provider: { select: { fullName: true } }, service: { select: { title: true, images: true } } },
+ orderBy: { dateTime: \asc\ }
+ }),
+ // 2. Completed Count
+ prisma.booking.count({ where: { userId, status: \COMPLETED\ } }),
+ // 3. Total Spent
+ prisma.booking.aggregate({
+ where: { userId, status: \COMPLETED\ },
+ _sum: { amount: true }
+ })
+ ]);
+
+ sendResponse(res, 200, \User dashboard data fetched\, {
+ activeBookings,
+ completedCount: stats,
+ totalSpent: totalSpent._sum.amount || 0,
+ nextJob: activeBookings[0] || null
+ });
+ } catch (error) {
+ console.error(\User Dashboard Error:\, error);
+ sendError(res, 500, \Failed to fetch dashboard data\);
+ }
 };
