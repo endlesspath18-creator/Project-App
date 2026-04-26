@@ -211,7 +211,7 @@ export const verifyProvider = async (req: Request, res: Response) => {
       data: {
         userId: req.user!.id,
         action: isVerified ? "VERIFY_PROVIDER" : "UNVERIFY_PROVIDER",
-        details: `Provider ${id} verification set to ${isVerified} by admin ${req.user!.email}`,
+        details: `Provider ${id} verification set to ${isVerified} by admin ID: ${req.user!.id}`,
         ipAddress: req.ip
       }
     });
@@ -237,7 +237,7 @@ export const manualUnlockProvider = async (req: Request, res: Response) => {
       data: {
         userId: req.user!.id,
         action: "MANUAL_UNLOCK_PROVIDER",
-        details: `Provider ${id} manually unlocked by admin ${req.user!.email}`,
+        details: `Provider ${id} manually unlocked by admin ID: ${req.user!.id}`,
         ipAddress: req.ip
       }
     });

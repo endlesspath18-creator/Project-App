@@ -4,7 +4,6 @@ import {
   getUserBookings,
   getProviderBookings,
   getProviderDashboardData,
-  initiatePayment,
   confirmPayment,
   completeBooking,
   handlePaymentWebhook
@@ -27,7 +26,6 @@ router.use(protect);
 // User Routes
 router.post("/", requireRole("USER"), validate(createBookingSchema), createBooking);
 router.get("/my", requireRole("USER"), getUserBookings);
-router.post("/:id/pay", requireRole("USER"), initiatePayment);
 router.post("/confirm-payment", requireRole("USER"), confirmPayment);
 
 // Provider Routes
