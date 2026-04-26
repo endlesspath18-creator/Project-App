@@ -25,8 +25,13 @@ export const createRazorpayOrder = async (amount: number, bookingId: string) => 
   try {
     const order = await razorpay.orders.create(options);
     return order;
-  } catch (error) {
-    console.error("[RazorpayService] Order Creation Error:", error);
+  } catch (error: any) {
+    console.error("[RazorpayService] Order Creation Error Details:", {
+      message: error.message,
+      description: error.description,
+      metadata: error.metadata,
+      statusCode: error.statusCode
+    });
     throw new Error("RAZORPAY_ORDER_FAILED");
   }
 };
