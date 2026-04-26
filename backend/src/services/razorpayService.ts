@@ -16,7 +16,7 @@ export const createRazorpayOrder = async (amount: number, bookingId: string) => 
   const options = {
     amount: Math.round(amount * 100), // Convert to paise
     currency: "INR",
-    receipt: `booking_${bookingId}`, // Unique receipt for idempotency
+    receipt: `b_${bookingId}`, // Unique receipt for idempotency (Must be < 40 chars)
     notes: {
       bookingId,
     },
@@ -27,9 +27,9 @@ export const createRazorpayOrder = async (amount: number, bookingId: string) => 
     const order = await razorpay.orders.create(options);
     return order;
   } catch (error: any) {
-    console.error("[RazorpayService] Order Creation Error FULL:", JSON.stringify(error, null, 2));
-    console.error("[RazorpayService] Error Summary:", {
+    console.error("[RazorpayService] Order Creation Error Summary:", {
       message: error.message,
+      description: error.description,
       statusCode: error.statusCode
     });
     throw new Error("RAZORPAY_ORDER_FAILED");
