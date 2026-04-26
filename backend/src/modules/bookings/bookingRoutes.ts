@@ -3,10 +3,11 @@ import {
   createBooking,
   getUserBookings,
   getProviderBookings,
-  acceptBooking,
-  rejectBooking,
-  startBooking,
-  completeBooking
+  getProviderDashboardData,
+  initiatePayment,
+  confirmPayment,
+  completeBooking,
+  handlePaymentWebhook
 } from "./bookingController";
 import { protect } from "../../middleware/authMiddleware";
 import { requireRole } from "../../middleware/roleMiddleware";
@@ -16,18 +17,22 @@ import "express-async-errors";
 
 const router = Router();
 
-// All booking routes require authentication
+// ─── Public/Webhook Routes (No Auth) ──────────────────────────────────────────
+// In a real app, this should have signature verification middleware
+router.post("/webhook/razorpay", handlePaymentWebhook);
+
+// ─── Protected Routes ──────────────────────────────────────────────────────────
 router.use(protect);
 
-// User strictly routes
+// User Routes
 router.post("/", requireRole("USER"), validate(createBookingSchema), createBooking);
 router.get("/my", requireRole("USER"), getUserBookings);
+router.post("/:id/pay", requireRole("USER"), initiatePayment);
+router.post("/confirm-payment", requireRole("USER"), confirmPayment);
 
-// Provider strictly routes
+// Provider Routes
 router.get("/provider", requireRole("PROVIDER"), getProviderBookings);
-router.patch("/:id/accept", requireRole("PROVIDER"), acceptBooking);
-router.patch("/:id/reject", requireRole("PROVIDER"), rejectBooking);
-router.patch("/:id/start", requireRole("PROVIDER"), startBooking);
+router.get("/provider/dashboard", requireRole("PROVIDER"), getProviderDashboardData);
 router.patch("/:id/complete", requireRole("PROVIDER"), completeBooking);
 
 export default router;

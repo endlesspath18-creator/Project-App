@@ -108,3 +108,45 @@ export const getActiveJobs = async (req: Request, res: Response) => {
 
   sendResponse(res, 200, "Active jobs fetched", jobs);
 };
+export const updateProviderProfile = async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const { businessName, bio, experienceYears } = req.body;
+
+  try {
+    const profile = await prisma.providerProfile.update({
+      where: { userId },
+      data: {
+        businessName: businessName || undefined,
+        bio: bio || undefined,
+        experienceYears: experienceYears ? parseInt(experienceYears) : undefined,
+      },
+    });
+
+    return sendResponse(res, 200, "Business profile updated successfully", profile);
+  } catch (error) {
+    console.error("Update Provider Profile Error:", error);
+    sendError(res, 500, "Failed to update business profile");
+  }
+};
+
+export const toggleAvailability = async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+
+  try {
+    const profile = await prisma.providerProfile.findUnique({
+      where: { userId },
+    });
+
+    if (!profile) return sendError(res, 404, "Provider profile not found");
+
+    const updatedProfile = await prisma.providerProfile.update({
+      where: { userId },
+      data: { isOnline: !profile.isOnline },
+    });
+
+    return sendResponse(res, 200, `You are now ${updatedProfile.isOnline ? "Online" : "Offline"}`, updatedProfile);
+  } catch (error) {
+    console.error("Toggle Availability Error:", error);
+    sendError(res, 500, "Failed to toggle online status");
+  }
+};

@@ -8,8 +8,10 @@ const envSchema = z.object({
   DIRECT_URL: z.string().min(1, "DIRECT_URL is required"),
   PORT: z.string().default("5000"),
   JWT_SECRET: z.string().min(1, "JWT_SECRET is required"),
-  RAZORPAY_KEY_ID: z.string().optional(),
-  RAZORPAY_KEY_SECRET: z.string().optional(),
+  JWT_REFRESH_SECRET: z.string().optional(),
+  RAZORPAY_KEY_ID: z.string().min(1, "RAZORPAY_KEY_ID is required"),
+  RAZORPAY_KEY_SECRET: z.string().min(1, "RAZORPAY_KEY_SECRET is required"),
+  RAZORPAY_WEBHOOK_SECRET: z.string().optional(), // Webhook secret is often added after initial setup
 });
 
 const _env = envSchema.safeParse(process.env);

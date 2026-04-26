@@ -1,12 +1,16 @@
 import app from "./app";
 import { env } from "./config/env";
 import { prisma } from "./config/db";
+import { startExpiryCron } from "./services/cronService";
 
 const startServer = async () => {
   try {
     // Attempt database connection
     await prisma.$connect();
     console.log("✅ Database connection established.");
+
+    // Start background jobs
+    startExpiryCron();
 
     const PORT = env.PORT || 5000;
     app.listen(PORT, () => {

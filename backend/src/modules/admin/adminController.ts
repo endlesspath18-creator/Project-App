@@ -196,3 +196,54 @@ export const getAllBookings = async (req: Request, res: Response) => {
     sendError(res, 500, "Failed to fetch bookings");
   }
 };
+
+export const verifyProvider = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { isVerified } = req.body;
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { isVerified },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user!.id,
+        action: isVerified ? "VERIFY_PROVIDER" : "UNVERIFY_PROVIDER",
+        details: `Provider ${id} verification set to ${isVerified} by admin ${req.user!.email}`,
+        ipAddress: req.ip
+      }
+    });
+
+    sendResponse(res, 200, `Provider ${isVerified ? "verified" : "unverified"} successfully`, updatedUser);
+  } catch (error) {
+    sendError(res, 500, "Failed to update provider verification status");
+  }
+};
+
+export const manualUnlockProvider = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { 
+        hasPaidPublishingFee: true,
+        canPublishService: true
+      },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user!.id,
+        action: "MANUAL_UNLOCK_PROVIDER",
+        details: `Provider ${id} manually unlocked by admin ${req.user!.email}`,
+        ipAddress: req.ip
+      }
+    });
+
+    sendResponse(res, 200, "Provider manually unlocked for publishing", updatedUser);
+  } catch (error) {
+    sendError(res, 500, "Failed to unlock provider");
+  }
+};

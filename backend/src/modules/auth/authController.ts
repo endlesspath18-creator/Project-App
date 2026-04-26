@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
 import { prisma } from "../../config/db";
 import { hashPassword, verifyPassword } from "../../utils/hash";
-import { generateToken } from "../../utils/jwt";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../utils/jwt";
 import { sendResponse, sendError } from "../../utils/response";
+
 
 export const register = async (req: Request, res: Response) => {
   console.log("[AuthController] Registration Attempt:", { 
@@ -69,11 +70,12 @@ export const register = async (req: Request, res: Response) => {
       return user;
     });
 
-    const token = generateToken({ id: result.id, role: result.role });
+    const { accessToken, refreshToken } = await generateAndSaveTokens(result.id, result.role);
 
     console.log("[AuthController] Registration Successful:", result.id);
     return sendResponse(res, 201, "User registered successfully", {
-      token,
+      token: accessToken,
+      refreshToken,
       user: {
         id: result.id,
         fullName: result.fullName,
@@ -135,17 +137,20 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Step 5: Success
-    const token = generateToken({ id: user.id, role: user.role });
+    const { accessToken, refreshToken } = await generateAndSaveTokens(user.id, user.role);
 
     console.log("[AuthController] Login Successful:", user.id);
     return sendResponse(res, 200, "Login successful", {
-      token,
+      token: accessToken,
+      refreshToken,
       user: {
         id: user.id,
         fullName: user.fullName,
         email: user.email,
         role: user.role,
         isRoleSet: user.isRoleSet,
+        hasPaidPublishingFee: user.hasPaidPublishingFee,
+        canPublishService: user.canPublishService,
         providerProfile: user.providerProfile,
       },
     });
@@ -173,6 +178,8 @@ export const getMe = async (req: Request, res: Response) => {
         role: true,
         isRoleSet: true,
         isActive: true,
+        hasPaidPublishingFee: true,
+        canPublishService: true,
         createdAt: true,
         providerProfile: true,
       },
@@ -189,6 +196,102 @@ export const getMe = async (req: Request, res: Response) => {
   }
 };
 
+export const updateProfile = async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const { fullName, phone } = req.body;
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        fullName: fullName || undefined,
+        phone: phone || undefined,
+      },
+    });
+
+    return sendResponse(res, 200, "Profile updated successfully", updatedUser);
+  } catch (error: any) {
+    console.error("[AuthController] UPDATE_PROFILE_ERROR:", error);
+    return sendError(res, 500, "Failed to update profile.");
+  }
+};
+
+export const updatePassword = async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.passwordHash) {
+      return sendError(res, 404, "User not found or password not set.");
+    }
+
+    const isMatch = await verifyPassword(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      return sendError(res, 401, "Current password incorrect.");
+    }
+
+    const newHash = await hashPassword(newPassword);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: newHash },
+    });
+
+    return sendResponse(res, 200, "Password updated successfully.");
+  } catch (error: any) {
+    console.error("[AuthController] UPDATE_PASSWORD_ERROR:", error);
+    return sendError(res, 500, "Failed to update password.");
+  }
+};
+
 export const logout = async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
+  if (refreshToken) {
+    await prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
+  }
   return sendResponse(res, 200, "Logged out successfully.");
+};
+
+export const refresh = async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) return sendError(res, 400, "Refresh token required");
+
+  try {
+    const payload = verifyRefreshToken(refreshToken);
+    const storedToken = await prisma.refreshToken.findUnique({
+      where: { token: refreshToken },
+    });
+
+    if (!storedToken || storedToken.expiresAt < new Date()) {
+      if (storedToken) await prisma.refreshToken.delete({ where: { id: storedToken.id } });
+      return sendError(res, 401, "Invalid or expired refresh token");
+    }
+
+    // Generate new access token
+    const accessToken = generateAccessToken({ id: payload.id, role: payload.role });
+    return sendResponse(res, 200, "Token refreshed", { accessToken });
+  } catch (error) {
+    return sendError(res, 401, "Invalid refresh token");
+  }
+};
+
+const generateAndSaveTokens = async (userId: string, role: string) => {
+  const accessToken = generateAccessToken({ id: userId, role });
+  const refreshToken = generateRefreshToken({ id: userId, role });
+  
+  // Save refresh token to DB (limit to 5 sessions per user for security)
+  const tokenCount = await prisma.refreshToken.count({ where: { userId } });
+  if (tokenCount >= 5) {
+    await prisma.refreshToken.deleteMany({ where: { userId } }); // Simple flush for now
+  }
+
+  await prisma.refreshToken.create({
+    data: {
+      token: refreshToken,
+      userId,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+    }
+  });
+
+  return { accessToken, refreshToken };
 };

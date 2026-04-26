@@ -16,6 +16,8 @@ const app: Application = express();
 
 // Global Middlewares
 app.use(cors());
+// Raw body needed for webhook signature verification
+app.use("/api/bookings/webhook/razorpay", express.raw({ type: "application/json" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

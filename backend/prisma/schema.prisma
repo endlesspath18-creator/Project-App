@@ -21,12 +21,20 @@ enum ServiceStatus {
 }
 
 enum BookingStatus {
+  DRAFT
+  REQUESTED
   PENDING
   ACCEPTED
-  REJECTED
+  PROVIDER_ACCEPTED
+  PAYMENT_PENDING
+  CONFIRMED
   IN_PROGRESS
   COMPLETED
   CANCELLED
+  REJECTED
+  PAYMENT_FAILED
+  EXPIRED
+  REFUNDED
 }
 
 model User {
@@ -42,18 +50,17 @@ model User {
   createdAt    DateTime @default(now())
   hasPaidPublishingFee Boolean  @default(false)
   canPublishService    Boolean  @default(false)
+  isVerified           Boolean  @default(false)
   
   providerProfile ProviderProfile?
-  services        Service[]
-  
-  bookingsAsUser     Booking[] @relation("UserBookings")
-  bookingsAsProvider Booking[] @relation("ProviderBookings")
-  
-  reviewsAsUser      Review[] @relation("UserReviews")
-  reviewsAsProvider  Review[] @relation("ProviderReviews")
-  
-  notifications      Notification[]
-  transactions       PaymentTransaction[]
+  services     Service[]
+  bookings     Booking[]      @relation("UserBookings")
+  jobs         Booking[]      @relation("ProviderBookings")
+  reviewsAsUser     Review[]       @relation("UserReviews")
+  reviewsAsProvider Review[]       @relation("ProviderReviews")
+  transactions PaymentTransaction[]
+  notifications Notification[]
+  refreshTokens RefreshToken[]
 }
 
 model AdminPaymentConfig {
@@ -77,9 +84,11 @@ model PaymentTransaction {
   paymentId        String?  @unique // Gateway ID (Unique to prevent replay)
   orderId          String?  @unique // Gateway Order ID
   gatewayResponse  Json?    // Full response from gateway for auditing
+  bookingId        String?
   createdAt        DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking Booking? @relation(fields: [bookingId], references: [id])
 }
 
 model AuditLog {
@@ -89,6 +98,16 @@ model AuditLog {
   details   String?  @db.Text
   ipAddress String?
   createdAt DateTime @default(now())
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ProviderProfile {
@@ -129,15 +148,19 @@ model Booking {
   userId        String
   providerId    String
   serviceId     String
-  status        BookingStatus @default(PENDING)
+  status        BookingStatus @default(REQUESTED)
   dateTime      DateTime      // Unified name as 'dateTime'
+  slot          String?       // Display slot like "10:00 AM - 11:00 AM"
   address       String
   notes         String?
   amount        Float         // Renamed from totalAmount to amount
+  durationMinutes Int         @default(60) // Store duration at booking time
   paymentMethod String        @default("COD") // COD or ONLINE
   paymentStatus String        @default("PENDING")
   paymentId     String?       // Razorpay Payment ID
   orderId       String?       // Razorpay Order ID
+  holdExpiresAt DateTime?     // Slot lock expiry
+  idempotencyKey String?      @unique
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -145,7 +168,23 @@ model Booking {
   provider User    @relation("ProviderBookings", fields: [providerId], references: [id])
   service  Service @relation(fields: [serviceId], references: [id])
   
-  review  Review?
+  reviews  Review[]
+  events   BookingEvent[]
+  transactions PaymentTransaction[]
+
+  @@unique([providerId, dateTime])
+}
+
+model BookingEvent {
+  id         String   @id @default(uuid())
+  bookingId  String
+  fromStatus String
+  toStatus   String
+  actorId    String   // User ID of the person who triggered the change
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 }
 
 model Notification {

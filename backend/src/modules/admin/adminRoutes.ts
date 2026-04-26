@@ -17,6 +17,8 @@ router.get("/finance/transactions", adminController.getAllTransactions);
 router.get("/users", adminController.getAllUsers);
 router.get("/providers", adminController.getAllProviders);
 router.patch("/users/:id/toggle-status", adminController.toggleUserStatus);
+router.patch("/providers/:id/verify", adminController.verifyProvider);
+router.post("/providers/:id/manual-unlock", adminController.manualUnlockProvider);
 router.get("/bookings", adminController.getAllBookings);
 
 export default router;
