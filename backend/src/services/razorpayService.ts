@@ -21,15 +21,15 @@ export const createRazorpayOrder = async (amount: number, bookingId: string) => 
       bookingId,
     },
   };
+  console.log("[RazorpayService] Creating Order with options:", JSON.stringify(options, null, 2));
 
   try {
     const order = await razorpay.orders.create(options);
     return order;
   } catch (error: any) {
-    console.error("[RazorpayService] Order Creation Error Details:", {
+    console.error("[RazorpayService] Order Creation Error FULL:", JSON.stringify(error, null, 2));
+    console.error("[RazorpayService] Error Summary:", {
       message: error.message,
-      description: error.description,
-      metadata: error.metadata,
       statusCode: error.statusCode
     });
     throw new Error("RAZORPAY_ORDER_FAILED");
