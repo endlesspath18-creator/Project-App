@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:mobile_app/core/api_client.dart';
+
 import 'package:mobile_app/core/constants.dart';
 import 'package:mobile_app/core/design_system.dart';
 import 'package:mobile_app/widgets/glass_widgets.dart';
@@ -27,10 +30,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
           children: [
             const _AdminHomeTab(),
             const _AdminSecurityTab(),
-            const Center(child: Text("General Settings")),
-            const Center(child: Text("Provider Accounts Controller")),
+            const _AdminSettingsTab(),
+            const _AdminProvidersTab(),
           ],
         ),
+
 
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -399,6 +403,237 @@ class _AdminSecurityTabState extends State<_AdminSecurityTab> {
     );
   }
 }
+
+// ─── Provider Accounts Control Tab ──────────────────────────────────────────
+class _AdminProvidersTab extends StatefulWidget {
+  const _AdminProvidersTab();
+  @override
+  State<_AdminProvidersTab> createState() => _AdminProvidersTabState();
+}
+
+class _AdminProvidersTabState extends State<_AdminProvidersTab> {
+  bool _isLoading = true;
+  List<dynamic> _providers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    setState(() => _isLoading = true);
+    try {
+      final response = await ApiClient.get('/admin/providers');
+      setState(() => _providers = response.data['data'] ?? []);
+    } catch (e) {
+      debugPrint('Providers load error: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _toggleStatus(String id) async {
+    try {
+      await ApiClient.patch('/admin/users/$id/toggle-status', {});
+      _fetch();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Action failed: $e')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("PARTNERS", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 12)),
+              const SizedBox(height: 8),
+              const Text("Provider Control", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+              _buildStatsRow(),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _isLoading 
+            ? const Center(child: CircularProgressIndicator()) 
+            : RefreshIndicator(
+                onRefresh: _fetch,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: _providers.length,
+                  itemBuilder: (context, index) => _buildProviderCard(_providers[index]),
+                ),
+              ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsRow() {
+    return Row(
+      children: [
+        _buildSmallStat("Total", "${_providers.length}"),
+        const SizedBox(width: 12),
+        _buildSmallStat("Active", "${_providers.where((p) => p['isActive'] == true).length}"),
+        const SizedBox(width: 12),
+        _buildSmallStat("Banned", "${_providers.where((p) => p['isActive'] == false).length}"),
+      ],
+    );
+  }
+
+  Widget _buildSmallStat(String label, String value) {
+    return Expanded(
+      child: GlassCard(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          children: [
+            Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProviderCard(dynamic p) {
+    final bool isActive = p['isActive'] ?? true;
+    final String bizName = p['providerProfile']?['businessName'] ?? 'No Business Name';
+    
+    return GlassCard(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+            child: Text(p['fullName']?[0] ?? 'P', style: const TextStyle(color: AppColors.primary)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(p['fullName'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(bizName, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                Text(p['email'] ?? '', style: const TextStyle(fontSize: 10, color: AppColors.textTertiary)),
+              ],
+            ),
+          ),
+          Switch(
+            value: isActive,
+            onChanged: (v) => _toggleStatus(p['id']),
+            activeColor: AppColors.primary,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Settings Tab ───────────────────────────────────────────────────────────
+class _AdminSettingsTab extends StatelessWidget {
+  const _AdminSettingsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final user = context.read<AuthProvider>().user;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("SYSTEM", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 12)),
+          const SizedBox(height: 8),
+          const Text("Admin Settings", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 24),
+          
+          _buildSettingsGroup("Account", [
+            _buildSettingTile(Icons.person_outline_rounded, "Profile Information", "Update your admin details", () {}),
+            _buildSettingTile(Icons.lock_outline_rounded, "Security", "Password and access logs", () {}),
+          ]),
+          
+          const SizedBox(height: 20),
+          _buildSettingsGroup("App Content", [
+            _buildSettingTile(Icons.photo_library_outlined, "Banner Manager", "Manage scrolling home pics", () {
+               Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminBannersScreen()));
+            }),
+            _buildSettingTile(Icons.category_outlined, "Service Categories", "Manage categories & tags", () {}),
+          ]),
+
+          const SizedBox(height: 20),
+          _buildSettingsGroup("System", [
+            _buildSettingTile(Icons.info_outline_rounded, "App Version", "v1.0.4 Premium", () {}),
+            _buildSettingTile(Icons.logout_rounded, "Logout", "Exit admin session", () => _showLogoutDialog(context), color: Colors.redAccent),
+          ]),
+          
+          const SizedBox(height: 40),
+          Center(
+            child: Text(
+              "Logged in as: ${user?.email}",
+              style: const TextStyle(fontSize: 10, color: AppColors.textTertiary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsGroup(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textSecondary)),
+        ),
+        GlassCard(
+          padding: EdgeInsets.zero,
+          child: Column(children: children),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSettingTile(IconData icon, String title, String subtitle, VoidCallback onTap, {Color? color}) {
+    return ListTile(
+      onTap: onTap,
+      leading: Icon(icon, color: color ?? AppColors.primary, size: 22),
+      title: Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: color ?? AppColors.textPrimary)),
+      subtitle: Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+      trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textTertiary),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Logout"),
+        content: const Text("Are you sure you want to exit the admin panel?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<AuthProvider>().logout();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: const Text("Logout"),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 
 
 
