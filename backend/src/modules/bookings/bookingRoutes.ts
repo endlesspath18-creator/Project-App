@@ -1,7 +1,7 @@
 import { Router } from "express";
 import * as bookingController from "./bookingController";
 
-import { protect } from "../../middleware/authMiddleware";
+import { protect, adminOnly } from "../../middleware/authMiddleware";
 import { requireRole } from "../../middleware/roleMiddleware";
 import { validate } from "../../middleware/validate";
 import { createBookingSchema } from "./bookingSchema";
@@ -23,7 +23,7 @@ router.get("/user/dashboard", requireRole("USER"), bookingController.getUserDash
 router.get("/my", requireRole("USER"), bookingController.getUserBookings);
 router.post("/confirm-payment", requireRole("USER"), bookingController.confirmPayment);
 router.post("/payment-failure", requireRole("USER"), bookingController.handlePaymentFailure);
-router.post("/cleanup-expired", protect, adminOnly, bookingController.cleanupExpiredBookings);
+router.post("/cleanup-expired", adminOnly, bookingController.cleanupExpiredBookings);
 
 
 // Provider Routes
