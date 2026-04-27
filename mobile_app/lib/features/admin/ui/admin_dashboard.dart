@@ -8,8 +8,8 @@ import 'package:mobile_app/core/design_system.dart';
 import 'package:mobile_app/core/app_dimensions.dart';
 import 'package:mobile_app/widgets/glass_widgets.dart';
 import 'package:mobile_app/features/profile/ui/profile_screen.dart';
-import 'package:mobile_app/features/admin/ui/admin_finance_screen.dart';
 import 'package:mobile_app/features/admin/ui/admin_banners_screen.dart';
+
 
 
 class AdminDashboard extends StatefulWidget {
@@ -27,7 +27,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   void initState() {
     super.initState();
+    _checkAccess();
     _loadStats();
+  }
+
+  void _checkAccess() {
+    final user = context.read<AuthProvider>().user;
+    if (user?.email != "endlesspath18@gmail.com") {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Access Denied: Admin Only")));
+        Navigator.pop(context);
+      });
+    }
   }
 
   Future<void> _loadStats() async {
@@ -59,10 +70,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildBody() {
     if (_currentIndex == 0) return _buildOverview();
-    if (_currentIndex == 1) return const _UserManagementList(role: 'USER');
-    if (_currentIndex == 2) return const _UserManagementList(role: 'PROVIDER');
-    if (_currentIndex == 3) return const AdminFinanceScreen();
-    if (_currentIndex == 4) return const ProfileScreen();
+    if (_currentIndex == 1) return const AdminBannersScreen();
+    if (_currentIndex == 2) return const ProfileScreen();
     return const Center(child: Text("Error"));
   }
 
@@ -78,12 +87,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
+                  const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("ADMIN PANEL", style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                      const SizedBox(height: 4),
-                      const Text("Control Center", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      Text("ADMIN PANEL", style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                      SizedBox(height: 4),
+                      Text("Control Center", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                     ],
                   ),
                   _buildProfileAvatar(),
@@ -109,10 +118,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   _buildStatCard("Providers", "${_stats!['totalProviders']}", Icons.business_center_outlined, Colors.purple),
                   _buildStatCard("Bookings", "${_stats!['totalBookings']}", Icons.calendar_today_rounded, Colors.orange),
                   _buildStatCard("Revenue", "₹${_stats!['totalRevenue'].toInt()}", Icons.account_balance_wallet_outlined, Colors.green),
-                  GestureDetector(
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminBannersScreen())),
-                    child: _buildStatCard("Scrolling Pics", "Manage", Icons.photo_library_outlined, Colors.pinkAccent),
-                  ),
                 ]),
 
               ),
@@ -126,7 +131,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildProfileAvatar() {
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = 4),
+      onTap: () => setState(() => _currentIndex = 2),
       child: Container(
         width: 45, height: 45,
         decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
@@ -153,11 +158,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildManagementView() {
-    // This function is now superseded by _buildBody directly
-    return const SizedBox();
-  }
-
   Widget _buildBottomNav() {
     return Container(
       height: 70 + MediaQuery.of(context).padding.bottom,
@@ -170,10 +170,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildNavItem(Icons.analytics_outlined, Icons.analytics_rounded, "Stats", 0),
-            _buildNavItem(Icons.people_outline_rounded, Icons.people_alt_rounded, "Users", 1),
-            _buildNavItem(Icons.business_center_outlined, Icons.business_center_rounded, "Pros", 2),
-            _buildNavItem(Icons.payments_outlined, Icons.payments_rounded, "Finance", 3),
-            _buildNavItem(Icons.person_outline, Icons.person, "Profile", 4),
+            _buildNavItem(Icons.photo_library_outlined, Icons.photo_library, "Pics", 1),
+            _buildNavItem(Icons.person_outline, Icons.person, "Profile", 2),
           ],
         ),
       ),
@@ -195,172 +193,5 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 }
 
-class _UserManagementList extends StatefulWidget {
-  final String role;
-  const _UserManagementList({required this.role});
 
-  @override
-  State<_UserManagementList> createState() => _UserManagementListState();
-}
 
-class _UserManagementListState extends State<_UserManagementList> {
-  List<dynamic> _users = [];
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetch();
-  }
-
-  Future<void> _fetch() async {
-    setState(() => _loading = true);
-    try {
-      final endpoint = widget.role == 'USER' ? '/admin/users' : '/admin/providers';
-      final response = await ApiClient.get(endpoint);
-      setState(() => _users = response.data['data']);
-    } catch (e) {
-      debugPrint('Error: $e');
-    } finally {
-      setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _toggleStatus(String id) async {
-    try {
-      await ApiClient.patch('/admin/users/$id/toggle-status', {});
-      _fetch();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Action failed: $e')));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text("${widget.role} MANAGEMENT", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        ),
-        Expanded(
-          child: _loading 
-            ? const Center(child: CircularProgressIndicator()) 
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemCount: _users.length,
-                itemBuilder: (context, index) {
-                  final u = _users[index];
-                  final isActive = u['isActive'] ?? true;
-                  return GlassCard(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                          child: Text(u['fullName'][0]),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(u['fullName'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                              Text(u['email'], style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
-                            ],
-                          ),
-                        ),
-                        Switch(
-                          value: isActive, 
-                          onChanged: (_) => _toggleStatus(u['id']),
-                          activeColor: AppColors.primary,
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-        ),
-      ],
-    );
-  }
-}
-
-class _BookingManagementList extends StatefulWidget {
-  const _BookingManagementList();
-
-  @override
-  State<_BookingManagementList> createState() => _BookingManagementListState();
-}
-
-class _BookingManagementListState extends State<_BookingManagementList> {
-  List<dynamic> _bookings = [];
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetch();
-  }
-
-  Future<void> _fetch() async {
-    setState(() => _loading = true);
-    try {
-      final response = await ApiClient.get('/admin/bookings');
-      setState(() => _bookings = response.data['data']);
-    } catch (e) {
-      debugPrint('Error: $e');
-    } finally {
-      setState(() => _loading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const Padding(
-          padding: EdgeInsets.all(24),
-          child: Text("GLOBAL BOOKING LOGS", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        ),
-        Expanded(
-          child: _loading 
-            ? const Center(child: CircularProgressIndicator()) 
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemCount: _bookings.length,
-                itemBuilder: (context, index) {
-                  final b = _bookings[index];
-                  return GlassCard(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(b['service']['title'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                            Text("₹${b['amount']}", style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        const Divider(height: 20),
-                        Row(
-                          children: [
-                            const Icon(Icons.person, size: 12, color: AppColors.textSecondary),
-                            Text(" ${b['user']['fullName']}", style: const TextStyle(fontSize: 11)),
-                            const Spacer(),
-                            const Icon(Icons.business_center, size: 12, color: AppColors.textSecondary),
-                            Text(" ${b['provider']['fullName']}", style: const TextStyle(fontSize: 11)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-        ),
-      ],
-    );
-  }
-}

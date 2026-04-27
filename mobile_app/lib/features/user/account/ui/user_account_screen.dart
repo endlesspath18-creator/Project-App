@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:mobile_app/core/design_system.dart';
 import 'package:mobile_app/core/app_dimensions.dart';
+import 'package:mobile_app/widgets/glass_widgets.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:mobile_app/providers/user_account_provider.dart';
 import 'tabs/account_dashboard_tab.dart';
@@ -60,29 +61,30 @@ class _UserAccountScreenState extends State<UserAccountScreen> {
                 const SizedBox(height: 10),
                 _buildMenuSection("ACTIVITY", [
                   _buildMenuItem(Icons.calendar_month_outlined, "My Bookings", "View your service history", () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const Scaffold(appBar: AppBar(title: Text("My Bookings")), body: MyBookingsTab())));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: const Text("My Bookings")), body: const MyBookingsTab())));
                   }),
                   _buildMenuItem(Icons.favorite_outline_rounded, "Favorites", "Your saved providers", () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const Scaffold(appBar: AppBar(title: Text("Favorites")), body: FavoritesTab())));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: const Text("Favorites")), body: const FavoritesTab())));
                   }),
                 ]),
 
                 _buildMenuSection("WALLET & ALERTS", [
                   _buildMenuItem(Icons.account_balance_wallet_outlined, "Payments", "Manage your cards & billing", () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const Scaffold(appBar: AppBar(title: Text("Payments")), body: PaymentsTab())));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: const Text("Payments")), body: const PaymentsTab())));
                   }),
                   _buildMenuItem(Icons.notifications_none_rounded, "Alerts", "Notification center", () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const Scaffold(appBar: AppBar(title: Text("Alerts")), body: NotificationsTab())));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: const Text("Alerts")), body: const NotificationsTab())));
                   }),
                 ]),
 
                 _buildMenuSection("ACCOUNT SETTINGS", [
                   _buildMenuItem(Icons.person_outline_rounded, "Profile Details", "Edit your information", () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const Scaffold(appBar: AppBar(title: Text("Profile Settings")), body: ProfileSettingsTab())));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: const Text("Profile Settings")), body: const ProfileSettingsTab())));
                   }),
                   _buildMenuItem(Icons.support_agent_rounded, "Help & Support", "Get assistance & contact us", () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const Scaffold(appBar: AppBar(title: Text("Support")), body: SupportTab())));
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: const Text("Support")), body: const SupportTab())));
                   }),
+
                   _buildMenuItem(Icons.logout_rounded, "Logout", "Sign out of your account", () => _showLogoutDialog(context), color: Colors.redAccent),
                 ]),
                 
