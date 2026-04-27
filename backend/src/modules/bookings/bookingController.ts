@@ -39,31 +39,15 @@ export const createBooking = async (req: Request, res: Response) => {
       const requestedEnd = new Date(requestedStart.getTime() + service.durationMinutes * 60000);
 
       // 1.5 Check for overlapping bookings (Instant check) using Prisma API for better compatibility
-      const overlap = await tx.booking.findFirst({
-        where: {
-          providerId: service.providerId,
-          status: { notIn: ["CANCELLED", "REJECTED", "EXPIRED", "PAYMENT_FAILED"] },
-          AND: [
-            { dateTime: { lt: requestedEnd } },
-            { 
-              OR: [
-                // If we don't have durationMinutes in DB for some reason, assume 60
-                { dateTime: { gt: new Date(requestedStart.getTime() - 24 * 60 * 60000) } } 
-              ]
-            }
-          ]
-        }
-      });
-
-      // Refined overlap check logic (Since raw SQL "interval" is tricky across DBs)
-      // We'll fetch potential overlaps and filter in JS if needed, but for now let's use a simpler range
+      // We include ALL statuses except CANCELLED/REJECTED because even EXPIRED or PAYMENT_FAILED 
+      // records still occupy the unique (providerId, dateTime) slot in the DB.
       const potentialOverlaps = await tx.booking.findMany({
         where: {
           providerId: service.providerId,
-          status: { notIn: ["CANCELLED", "REJECTED", "EXPIRED", "PAYMENT_FAILED"] },
+          status: { notIn: ["CANCELLED", "REJECTED"] },
           dateTime: {
-            gte: new Date(requestedStart.getTime() - 4 * 60 * 60000), // 4 hours before
-            lte: new Date(requestedStart.getTime() + 4 * 60 * 60000), // 4 hours after
+            gte: new Date(requestedStart.getTime() - 24 * 60 * 60000), // Check within 24h
+            lte: new Date(requestedStart.getTime() + 24 * 60 * 60000),
           }
         }
       });
@@ -133,6 +117,9 @@ export const createBooking = async (req: Request, res: Response) => {
       : "Booking requested successfully.";
     sendResponse(res, 201, successMsg, result);
   } catch (error: any) {
+    if (error.code === 'P2002') {
+      return sendError(res, 409, "This exact time slot is already reserved. Please choose a different time.");
+    }
     if (error.message === "SERVICE_NOT_FOUND") return sendError(res, 404, "Service not found");
     if (error.message === "SERVICE_INACTIVE") return sendError(res, 400, "This service is currently disabled");
     if (error.message === "PROVIDER_BUSY") return sendError(res, 409, "Provider is already booked for this time slot");
@@ -141,7 +128,6 @@ export const createBooking = async (req: Request, res: Response) => {
     }
     
     console.error("Booking Error Detail:", error);
-    // Returning the actual error message to the client temporarily for easier production debugging
     sendError(res, 500, `Failed to initiate booking: ${error.message || 'Unknown Error'}`);
   }
 };
