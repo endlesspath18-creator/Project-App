@@ -105,17 +105,21 @@ export const verifyPayment = async (req: Request, res: Response) => {
         }
       });
 
-      // Calculate commission (10% platform fee)
-      const commission = booking.amount * 0.10;
-      const providerShare = booking.amount - commission;
+      // Calculate Split: 18% GST and 10% Admin Commission on Base
+      const total = booking.amount;
+      const baseAmount = total / 1.18;
+      const gstAmount = total - baseAmount;
+      const commissionAmount = baseAmount * 0.10;
+      const providerAmount = baseAmount - commissionAmount;
 
       await tx.paymentTransaction.create({
         data: {
           userId: booking.userId,
           type: "BOOKING",
-          amount: booking.amount,
-          commissionAmount: commission,
-          providerAmount: providerShare,
+          amount: total,
+          gstAmount: gstAmount,
+          commissionAmount: commissionAmount,
+          providerAmount: providerAmount,
           status: "SUCCESS",
           paymentId: razorpay_payment_id,
           orderId: razorpay_order_id,
@@ -123,7 +127,7 @@ export const verifyPayment = async (req: Request, res: Response) => {
         }
       });
 
-      console.log(`FINANCE_LOG: Booking ${bookingId} verified. Rev: ${commission}, Pro: ${providerShare}`);
+      console.log(`FINANCE_LOG: Booking ${bookingId} verified. Rev: ${commissionAmount}, GST: ${gstAmount}, Pro: ${providerAmount}`);
       return booking;
     });
 

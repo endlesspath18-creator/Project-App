@@ -132,6 +132,7 @@ model PaymentTransaction {
   userId           String
   type             String   // e.g., "BOOKING", "PROVIDER_ACTIVATION"
   amount           Float
+  gstAmount        Float    @default(0.0)
   commissionAmount Float    @default(0.0)
   providerAmount   Float    @default(0.0)
   status           String   // e.g., "PENDING", "SUCCESS", "FAILED"
@@ -210,6 +211,10 @@ model Booking {
   address       String
   notes         String?
   amount        Float         // Renamed from totalAmount to amount
+  baseAmount    Float?        // Amount without GST
+  gstAmount     Float?        // 18% GST
+  commissionAmount Float?     // 10% Admin Commission (on base)
+  providerAmount Float?       // Provider Share (90% of base)
   durationMinutes Int         @default(60) // Store duration at booking time
   paymentMethod String        @default("COD") // COD or ONLINE
   paymentStatus String        @default("PENDING")

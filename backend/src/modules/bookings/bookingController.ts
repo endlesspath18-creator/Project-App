@@ -64,6 +64,12 @@ export const createBooking = async (req: Request, res: Response) => {
       const holdExpiresAt = method === "ONLINE" ? new Date(Date.now() + 15 * 60 * 1000) : null;
       const initialStatus = method === "ONLINE" ? "PAYMENT_PENDING" : "REQUESTED";
 
+      const totalAmount = service.price;
+      const baseAmount = totalAmount / 1.18;
+      const gstAmount = totalAmount - baseAmount;
+      const commissionAmount = baseAmount * 0.10;
+      const providerAmount = baseAmount - commissionAmount;
+
       const newBooking = await tx.booking.create({
         data: {
           userId,
@@ -74,7 +80,11 @@ export const createBooking = async (req: Request, res: Response) => {
           durationMinutes: service.durationMinutes,
           address,
           notes,
-          amount: service.price,
+          amount: totalAmount,
+          baseAmount,
+          gstAmount,
+          commissionAmount,
+          providerAmount,
           paymentMethod: method,
           status: initialStatus,
           holdExpiresAt,
@@ -157,6 +167,12 @@ export const confirmPayment = async (req: Request, res: Response) => {
         throw new Error("ORDER_MISMATCH");
       }
 
+      const total = booking.amount;
+      const baseAmount = total / 1.18;
+      const gstAmount = total - baseAmount;
+      const commissionAmount = baseAmount * 0.10;
+      const providerAmount = baseAmount - commissionAmount;
+
       const updated = await tx.booking.update({
         where: { id: bookingId },
         data: {
@@ -164,6 +180,10 @@ export const confirmPayment = async (req: Request, res: Response) => {
           paymentStatus: "PAID",
           paymentId: razorpayPaymentId,
           orderId: razorpayOrderId,
+          baseAmount,
+          gstAmount,
+          commissionAmount,
+          providerAmount,
           holdExpiresAt: null
         }
       });
@@ -264,6 +284,12 @@ export const handlePaymentWebhook = async (req: Request, res: Response) => {
         const booking = await tx.booking.findUnique({ where: { id: bookingId } });
         if (!booking || booking.status === "CONFIRMED") return;
 
+        const total = booking.amount;
+        const baseAmount = total / 1.18;
+        const gstAmount = total - baseAmount;
+        const commissionAmount = baseAmount * 0.10;
+        const providerAmount = baseAmount - commissionAmount;
+
         await tx.booking.update({
           where: { id: bookingId },
           data: { 
@@ -271,6 +297,10 @@ export const handlePaymentWebhook = async (req: Request, res: Response) => {
             paymentStatus: "PAID",
             paymentId: payload.id,
             orderId: payload.order_id,
+            baseAmount,
+            gstAmount,
+            commissionAmount,
+            providerAmount,
             holdExpiresAt: null
           }
         });
