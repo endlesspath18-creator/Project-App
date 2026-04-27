@@ -198,15 +198,22 @@ export const confirmPayment = async (req: Request, res: Response) => {
         }
       });
 
-      // Create a notification for the provider
-      await tx.notification.create({
-        data: {
-          userId: booking.providerId,
-          title: "New Confirmed Booking!",
-          message: `You have a new booking confirmed for ${booking.slot}. Check your dashboard.`,
-          type: "BOOKING_CONFIRMED"
-        }
-      });
+      // Create a Payout Record for the provider
+      const providerProfile = await tx.providerProfile.findUnique({ where: { userId: booking.providerId } });
+      if (providerProfile) {
+        await tx.payoutRecord.create({
+          data: {
+            providerId: booking.providerId,
+            bookingId: bookingId,
+            amount: providerAmount,
+            status: "PENDING",
+            bankName: providerProfile.bankName || "Unknown",
+            bankAccountName: providerProfile.bankAccountName || "Unknown",
+            bankAccountNumber: providerProfile.bankAccountNumber || "Unknown",
+            bankIFSC: providerProfile.bankIFSC || "Unknown",
+          }
+        });
+      }
 
       return updated;
     });
@@ -324,6 +331,23 @@ export const handlePaymentWebhook = async (req: Request, res: Response) => {
             type: "BOOKING_CONFIRMED"
           }
         });
+
+        // Create Payout Record
+        const providerProfile = await tx.providerProfile.findUnique({ where: { userId: booking.providerId } });
+        if (providerProfile) {
+          await tx.payoutRecord.create({
+            data: {
+              providerId: booking.providerId,
+              bookingId: bookingId,
+              amount: providerAmount,
+              status: "PENDING",
+              bankName: providerProfile.bankName || "Unknown",
+              bankAccountName: providerProfile.bankAccountName || "Unknown",
+              bankAccountNumber: providerProfile.bankAccountNumber || "Unknown",
+              bankIFSC: providerProfile.bankIFSC || "Unknown",
+            }
+          });
+        }
       });
     }
 

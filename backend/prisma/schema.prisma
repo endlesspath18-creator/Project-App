@@ -64,6 +64,7 @@ model User {
   jobs         Booking[]      @relation("ProviderBookings")
   reviewsAsUser     Review[]       @relation("UserReviews")
   reviewsAsProvider Review[]       @relation("ProviderReviews")
+  payoutRecords PayoutRecord[]
   transactions PaymentTransaction[]
   notifications Notification[]
   refreshTokens RefreshToken[]
@@ -144,6 +145,28 @@ model PaymentTransaction {
 
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   booking Booking? @relation(fields: [bookingId], references: [id])
+}
+
+model PayoutRecord {
+  id                String   @id @default(uuid())
+  providerId        String
+  bookingId         String   @unique
+  amount            Float    // Net amount to be paid to provider
+  status            String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  
+  // Snapshot of bank details at the time of payout creation
+  bankName          String
+  bankAccountName   String
+  bankAccountNumber String
+  bankIFSC          String
+  
+  transactionId     String?  // Internal or gateway transaction ID for the payout
+  processedAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  provider User    @relation(fields: [providerId], references: [id])
+  booking  Booking @relation(fields: [bookingId], references: [id])
 }
 
 model AuditLog {
@@ -238,6 +261,7 @@ model Booking {
   reviews  Review[]
   events   BookingEvent[]
   transactions PaymentTransaction[]
+  payoutRecord PayoutRecord?
 
   @@unique([providerId, dateTime])
 }
