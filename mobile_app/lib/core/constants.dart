@@ -27,7 +27,12 @@ class AppConstants {
   static const String meLogoutAll = '/me/logout-all';
   static const String meSupport = '/me/support/tickets';
 
+  // Public Endpoints
+  static const String publicBanners = '/public/banners';
+  static const String publicTopProviders = '/public/top-providers';
+
   // Admin Endpoints
+
   static const String adminStats = '/admin/dashboard/stats';
   static const String adminFinance = '/admin/finance/summary';
   static const String adminProviders = '/admin/providers';

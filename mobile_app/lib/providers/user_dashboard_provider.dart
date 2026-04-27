@@ -26,12 +26,17 @@ class UserDashboardStats {
 
 class UserDashboardProvider with ChangeNotifier {
   UserDashboardStats? _stats;
+  List<dynamic> _banners = [];
+  List<dynamic> _topProviders = [];
   bool _isLoading = false;
   String? _error;
 
   UserDashboardStats? get stats => _stats;
+  List<dynamic> get banners => _banners;
+  List<dynamic> get topProviders => _topProviders;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -45,11 +50,26 @@ class UserDashboardProvider with ChangeNotifier {
     _setLoading(true);
     _error = null;
     try {
-      final response = await ApiClient.get('/bookings/user/dashboard');
-      if (response.statusCode == 200) {
-        _stats = UserDashboardStats.fromJson(response.data['data']);
-        notifyListeners();
+      // Fetch stats
+      final statsResponse = await ApiClient.get('/bookings/user/dashboard');
+      if (statsResponse.statusCode == 200) {
+        _stats = UserDashboardStats.fromJson(statsResponse.data['data']);
       }
+
+      // Fetch Banners (Scrolling pics)
+      final bannersResponse = await ApiClient.get('/public/banners');
+      if (bannersResponse.statusCode == 200) {
+        _banners = bannersResponse.data['data'] ?? [];
+      }
+
+      // Fetch Top Providers
+      final topProvidersResponse = await ApiClient.get('/public/top-providers');
+      if (topProvidersResponse.statusCode == 200) {
+        _topProviders = topProvidersResponse.data['data'] ?? [];
+      }
+
+      notifyListeners();
+
     } catch (e) {
       _error = 'Failed to load user dashboard: $e';
       debugPrint('User Dashboard Error: $e');

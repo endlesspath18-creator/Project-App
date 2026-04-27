@@ -135,8 +135,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                   const SliverToBoxAdapter(child: AppSectionLabel(label: "Popular Services")),
                   const SliverToBoxAdapter(child: PopularServices()),
                   
-                  const SliverToBoxAdapter(child: AppSectionLabel(label: "Service Providers Nearby")),
+                  const SliverToBoxAdapter(child: AppSectionLabel(label: "Top Rated Pros")),
                   const SliverToBoxAdapter(child: NearbyProviders()),
+
                   
                   const SliverToBoxAdapter(child: SizedBox(height: 100)),
                 ],

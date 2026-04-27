@@ -7,23 +7,19 @@ class NearbyProviders extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dummy data for top providers
-    final providers = [
-      {'name': 'Urban Fix', 'rating': '4.8', 'type': 'All Rounder', 'image': 'https://ui-avatars.com/api/?name=Urban+Fix&background=0D8ABC&color=fff'},
-      {'name': 'Mega Clean', 'rating': '4.9', 'type': 'Cleaning', 'image': 'https://ui-avatars.com/api/?name=Mega+Clean&background=4CAF50&color=fff'},
-      {'name': 'Sparky Elec', 'rating': '4.7', 'type': 'Electrician', 'image': 'https://ui-avatars.com/api/?name=Sparky+Elec&background=FFC107&color=fff'},
-    ];
+    final dashProvider = Provider.of<UserDashboardProvider>(context);
+    final providers = dashProvider.topProviders;
+
+    if (providers.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppDimensions.s20),
-          child: Text(
-            "Top Rated Providers",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
-          ),
-        ),
+        const SizedBox(height: 8),
+
         const SizedBox(height: 16),
         ListView.builder(
           shrinkWrap: true,
@@ -48,15 +44,17 @@ class NearbyProviders extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 25,
-                      backgroundImage: NetworkImage(p['image']!),
+                      backgroundImage: p['profileImage'] != null 
+                        ? NetworkImage(p['profileImage']) 
+                        : NetworkImage("https://ui-avatars.com/api/?name=${p['fullName']}&background=0D8ABC&color=fff"),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(p['name']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                          Text(p['type']!, style: const TextStyle(color: AppColors.textTertiary, fontSize: 12)),
+                          Text(p['fullName'] ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                          Text(p['providerProfile']?['businessName'] ?? 'Service Provider', style: TextStyle(color: AppColors.textTertiary, fontSize: 12)),
                         ],
                       ),
                     ),
@@ -70,10 +68,11 @@ class NearbyProviders extends StatelessWidget {
                         children: [
                           const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
                           const SizedBox(width: 4),
-                          Text(p['rating']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.orange)),
+                          Text(p['providerProfile']?['rating']?.toString() ?? '0.0', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.orange)),
                         ],
                       ),
                     ),
+
                   ],
                 ),
               ),

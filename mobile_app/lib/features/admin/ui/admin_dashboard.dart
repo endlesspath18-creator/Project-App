@@ -9,6 +9,8 @@ import 'package:mobile_app/core/app_dimensions.dart';
 import 'package:mobile_app/widgets/glass_widgets.dart';
 import 'package:mobile_app/features/profile/ui/profile_screen.dart';
 import 'package:mobile_app/features/admin/ui/admin_finance_screen.dart';
+import 'package:mobile_app/features/admin/ui/admin_banners_screen.dart';
+
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -107,7 +109,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   _buildStatCard("Providers", "${_stats!['totalProviders']}", Icons.business_center_outlined, Colors.purple),
                   _buildStatCard("Bookings", "${_stats!['totalBookings']}", Icons.calendar_today_rounded, Colors.orange),
                   _buildStatCard("Revenue", "₹${_stats!['totalRevenue'].toInt()}", Icons.account_balance_wallet_outlined, Colors.green),
+                  GestureDetector(
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminBannersScreen())),
+                    child: _buildStatCard("Scrolling Pics", "Manage", Icons.photo_library_outlined, Colors.pinkAccent),
+                  ),
                 ]),
+
               ),
             ),
           

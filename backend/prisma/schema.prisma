@@ -265,3 +265,12 @@ model Review {
   user     User    @relation("UserReviews", fields: [userId], references: [id])
   provider User    @relation("ProviderReviews", fields: [providerId], references: [id])
 }
+
+model Banner {
+  id        String   @id @default(uuid())
+  imageUrl  String
+  link      String?  // Optional link when clicked
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+

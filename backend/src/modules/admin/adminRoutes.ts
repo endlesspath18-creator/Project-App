@@ -21,4 +21,11 @@ router.patch("/providers/:id/verify", adminController.verifyProvider);
 router.post("/providers/:id/manual-unlock", adminController.manualUnlockProvider);
 router.get("/bookings", adminController.getAllBookings);
 
+// Banner Management
+import * as bannerController from "./bannerController";
+router.get("/banners", bannerController.getBanners);
+router.post("/banners", bannerController.createBanner);
+router.delete("/banners/:id", bannerController.deleteBanner);
+
 export default router;
+

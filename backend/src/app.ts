@@ -12,6 +12,8 @@ import reviewRoutes from "./modules/reviews/reviewRoutes";
 import providerRoutes from "./modules/provider/providerRoutes";
 import adminRoutes from "./modules/admin/adminRoutes";
 import meRoutes from "./modules/me/meRoutes";
+import publicRoutes from "./modules/public/publicRoutes";
+
 
 
 const app: Application = express();
@@ -44,6 +46,8 @@ app.use(`${API_PREFIX}/reviews`, reviewRoutes);
 app.use(`${API_PREFIX}/provider`, providerRoutes);
 app.use(`${API_PREFIX}/admin`, adminRoutes);
 app.use(`${API_PREFIX}/me`, meRoutes);
+app.use(`${API_PREFIX}/public`, publicRoutes);
+
 
 
 // Fallback Middlewares
