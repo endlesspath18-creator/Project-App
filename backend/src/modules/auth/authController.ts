@@ -11,7 +11,7 @@ export const register = async (req: Request, res: Response) => {
     role: req.body.role,
   });
 
-  const { fullName, email, phone, password, role, businessName } = req.body;
+  const { fullName, email, phone, password, role, businessName, bankAccountName, bankAccountNumber, bankIFSC, bankName } = req.body;
   const normalizedEmail = email.toLowerCase().trim();
 
   try {
@@ -43,9 +43,16 @@ export const register = async (req: Request, res: Response) => {
         },
       });
 
-      if (role === "PROVIDER" && businessName) {
+      if (role === "PROVIDER") {
         await tx.providerProfile.create({
-          data: { userId: user.id, businessName },
+          data: { 
+            userId: user.id, 
+            businessName: businessName || fullName,
+            bankAccountName,
+            bankAccountNumber,
+            bankIFSC,
+            bankName
+          },
         });
       }
 

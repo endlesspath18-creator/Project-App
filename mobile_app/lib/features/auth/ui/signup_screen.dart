@@ -23,6 +23,10 @@ class _SignupScreenState extends State<SignupScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _businessNameController = TextEditingController();
+  final _bankAccountNameController = TextEditingController();
+  final _bankAccountNumberController = TextEditingController();
+  final _bankIFSCController = TextEditingController();
+  final _bankNameController = TextEditingController();
   
   bool _isProvider = false;
   bool _isPasswordVisible = false;
@@ -35,6 +39,10 @@ class _SignupScreenState extends State<SignupScreen> {
     _phoneController.dispose();
     _passwordController.dispose();
     _businessNameController.dispose();
+    _bankAccountNameController.dispose();
+    _bankAccountNumberController.dispose();
+    _bankIFSCController.dispose();
+    _bankNameController.dispose();
     super.dispose();
   }
 
@@ -56,6 +64,10 @@ class _SignupScreenState extends State<SignupScreen> {
       password: _passwordController.text.trim(),
       role: _isProvider ? 'PROVIDER' : 'USER',
       businessName: _isProvider ? _businessNameController.text.trim() : null,
+      bankAccountName: _isProvider ? _bankAccountNameController.text.trim() : null,
+      bankAccountNumber: _isProvider ? _bankAccountNumberController.text.trim() : null,
+      bankIFSC: _isProvider ? _bankIFSCController.text.trim() : null,
+      bankName: _isProvider ? _bankNameController.text.trim() : null,
     );
 
     if (data != null) {
@@ -171,6 +183,37 @@ class _SignupScreenState extends State<SignupScreen> {
                                     hintText: "Business Name",
                                     prefixIcon: Icons.business_outlined,
                                     validator: (v) => v!.isEmpty ? "Required for Providers" : null,
+                                  ),
+                                  const SizedBox(height: AppDimensions.s16),
+                                  const Text("Banking Details", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primary)),
+                                  const SizedBox(height: AppDimensions.s8),
+                                  GlassInput(
+                                    controller: _bankNameController,
+                                    hintText: "Bank Name",
+                                    prefixIcon: Icons.account_balance_outlined,
+                                    validator: (v) => v!.isEmpty ? "Required" : null,
+                                  ),
+                                  const SizedBox(height: AppDimensions.s12),
+                                  GlassInput(
+                                    controller: _bankAccountNameController,
+                                    hintText: "Account Holder Name",
+                                    prefixIcon: Icons.person_outline,
+                                    validator: (v) => v!.isEmpty ? "Required" : null,
+                                  ),
+                                  const SizedBox(height: AppDimensions.s12),
+                                  GlassInput(
+                                    controller: _bankAccountNumberController,
+                                    hintText: "Account Number",
+                                    prefixIcon: Icons.numbers_outlined,
+                                    keyboardType: TextInputType.number,
+                                    validator: (v) => v!.isEmpty ? "Required" : null,
+                                  ),
+                                  const SizedBox(height: AppDimensions.s12),
+                                  GlassInput(
+                                    controller: _bankIFSCController,
+                                    hintText: "IFSC Code",
+                                    prefixIcon: Icons.code_outlined,
+                                    validator: (v) => v!.isEmpty ? "Required" : null,
                                   ),
                                 ],
                                 const SizedBox(height: AppDimensions.s16),

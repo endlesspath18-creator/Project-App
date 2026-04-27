@@ -175,6 +175,12 @@ model ProviderProfile {
   totalJobs       Int     @default(0)
   isOnline        Boolean @default(true)
   
+  // Banking Details (Required for payouts)
+  bankAccountName   String?
+  bankAccountNumber String?
+  bankIFSC          String?
+  bankName          String?
+  
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 

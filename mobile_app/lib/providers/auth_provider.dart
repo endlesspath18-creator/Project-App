@@ -102,6 +102,10 @@ class AuthProvider extends ChangeNotifier {
     required String role,
     String? businessName,
     String? phone,
+    String? bankAccountName,
+    String? bankAccountNumber,
+    String? bankIFSC,
+    String? bankName,
   }) async {
     _setLoading(true);
     _setError(null);
@@ -114,6 +118,10 @@ class AuthProvider extends ChangeNotifier {
       };
       if (phone != null && phone.isNotEmpty) body['phone'] = phone;
       if (businessName != null && businessName.isNotEmpty) body['businessName'] = businessName;
+      if (bankAccountName != null && bankAccountName.isNotEmpty) body['bankAccountName'] = bankAccountName;
+      if (bankAccountNumber != null && bankAccountNumber.isNotEmpty) body['bankAccountNumber'] = bankAccountNumber;
+      if (bankIFSC != null && bankIFSC.isNotEmpty) body['bankIFSC'] = bankIFSC;
+      if (bankName != null && bankName.isNotEmpty) body['bankName'] = bankName;
 
       final response = await ApiClient.post(AppConstants.registerEndpoint, body);
       _setLoading(false);
@@ -191,7 +199,15 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ─── Update Profile (Generic) ──────────────────────────────────────────────
-  Future<bool> updateProfile({String? fullName, String? phone, String? businessName}) async {
+  Future<bool> updateProfile({
+    String? fullName, 
+    String? phone, 
+    String? businessName,
+    String? bankAccountName,
+    String? bankAccountNumber,
+    String? bankIFSC,
+    String? bankName,
+  }) async {
     _setLoading(true);
     try {
       if (fullName != null || phone != null) {
@@ -201,10 +217,17 @@ class AuthProvider extends ChangeNotifier {
         });
       }
 
-      if (isProvider && businessName != null) {
-        await ApiClient.patch('/provider/profile', {
-          'businessName': businessName,
-        });
+      if (isProvider) {
+        final Map<String, dynamic> providerData = {};
+        if (businessName != null) providerData['businessName'] = businessName;
+        if (bankAccountName != null) providerData['bankAccountName'] = bankAccountName;
+        if (bankAccountNumber != null) providerData['bankAccountNumber'] = bankAccountNumber;
+        if (bankIFSC != null) providerData['bankIFSC'] = bankIFSC;
+        if (bankName != null) providerData['bankName'] = bankName;
+
+        if (providerData.isNotEmpty) {
+          await ApiClient.patch('/provider/profile', providerData);
+        }
       }
 
       await refreshUser();

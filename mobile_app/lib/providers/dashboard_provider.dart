@@ -8,6 +8,7 @@ class DashboardStats {
   final List<dynamic> upcomingBookings;
   final List<dynamic> recentReviews;
   final bool isOnline;
+  final bool requiresBankUpdate;
 
   DashboardStats({
     required this.totalEarnings,
@@ -16,6 +17,7 @@ class DashboardStats {
     required this.upcomingBookings,
     required this.recentReviews,
     required this.isOnline,
+    required this.requiresBankUpdate,
   });
 
   factory DashboardStats.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,7 @@ class DashboardStats {
       upcomingBookings: json['upcomingBookings'] as List? ?? [],
       recentReviews: json['recentReviews'] as List? ?? [],
       isOnline: json['isOnline'] == true,
+      requiresBankUpdate: json['requiresBankUpdate'] == true,
     );
   }
 }

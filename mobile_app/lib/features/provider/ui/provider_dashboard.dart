@@ -10,6 +10,7 @@ import 'package:mobile_app/core/design_system.dart';
 import 'package:mobile_app/core/app_dimensions.dart';
 import 'package:mobile_app/features/profile/ui/profile_screen.dart';
 import 'package:mobile_app/widgets/glass_widgets.dart';
+import 'package:mobile_app/features/provider/ui/update_bank_details_screen.dart';
 
 class ProviderDashboard extends StatefulWidget {
   const ProviderDashboard({super.key});
@@ -160,22 +161,32 @@ class _DashboardOverviewTabState extends State<_DashboardOverviewTab> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
-                    child: FadeInDown(
-                      child: Row(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Column(
+                      children: [
+                        FadeInDown(
+                          child: Row(
                             children: [
-                              Text("HELLO 👋", style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                              const SizedBox(height: 4),
-                              Text(authProvider.user?.fullName?.split(' ')[0].toUpperCase() ?? "PROVIDER", 
-                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("HELLO 👋", style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                                  const SizedBox(height: 4),
+                                  Text(authProvider.user?.fullName?.split(' ')[0].toUpperCase() ?? "PROVIDER", 
+                                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              const Spacer(),
+                              _buildStatusToggle(dashProvider),
                             ],
                           ),
-                          const Spacer(),
-                          _buildStatusToggle(dashProvider),
+                        ),
+                        if (stats?.requiresBankUpdate ?? false) ...[
+                          const SizedBox(height: 24),
+                          FadeInLeft(
+                            child: _buildStrictBankPrompt(),
+                          ),
                         ],
-                      ),
+                      ],
                     ),
                   ),
                 ),
@@ -329,6 +340,57 @@ class _DashboardOverviewTabState extends State<_DashboardOverviewTab> {
             Text(isOnline ? "ONLINE" : "OFFLINE", style: TextStyle(color: isOnline ? Colors.green : Colors.red, fontSize: 10, fontWeight: FontWeight.bold)),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStrictBankPrompt() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.red[900],
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.red.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 8))
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.white, size: 28),
+              SizedBox(width: 12),
+              Text(
+                "ACTION REQUIRED",
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "Update your banking details to receive payments for your services. This is mandatory for all providers.",
+            style: TextStyle(color: Colors.white, fontSize: 13, height: 1.4),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context, 
+                MaterialPageRoute(builder: (_) => const UpdateBankDetailsScreen())
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.red[900],
+              minimumSize: const Size(double.infinity, 45),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+            ),
+            child: const Text("UPDATE NOW", style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }

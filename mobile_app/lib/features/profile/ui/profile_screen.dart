@@ -7,6 +7,7 @@ import 'package:mobile_app/core/app_dimensions.dart';
 import 'package:mobile_app/widgets/glass_widgets.dart';
 import 'package:mobile_app/core/app_routes.dart';
 import 'package:mobile_app/data/user_model.dart';
+import 'package:mobile_app/features/provider/ui/update_bank_details_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -135,7 +136,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ]),
         const SizedBox(height: 24),
         _buildSection("Finance \u0026 Growth", [
-          _ProfileItem(Icons.account_balance_rounded, "Bank Details", "UPI and Payout settings", onTap: () => _showComingSoon(context, "Bank Details")),
+          _ProfileItem(Icons.account_balance_rounded, "Bank Details", "UPI and Payout settings", onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const UpdateBankDetailsScreen()));
+          }),
           _ProfileItem(Icons.payments_outlined, "Earnings Summary", "View your performance logs", onTap: () => Navigator.pushNamed(context, '/earnings')),
           if (user?.hasPaidPublishingFee == false)
             _ProfileItem(Icons.bolt_rounded, "Activate Premium", "Unlock all professional tools", color: Colors.amber, onTap: () => Navigator.pushNamed(context, AppRoutes.providerActivation))

@@ -37,13 +37,16 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     const completedCount = profile.totalJobs;
 
+    const requiresBankUpdate = !profile.bankAccountNumber || !profile.bankIFSC || !profile.bankName || !profile.bankAccountName;
+
     sendResponse(res, 200, "Dashboard stats fetched", {
       earnings: earnings._sum?.amount || 0,
       completedJobs: completedCount,
       pendingRequests: pendingCount,
       activeJobs: activeCount,
       rating: profile.rating,
-      isOnline: profile.isOnline
+      isOnline: profile.isOnline,
+      requiresBankUpdate
     });
   } catch (error) {
     console.error("Dashboard Stats Error:", error);
@@ -110,7 +113,10 @@ export const getActiveJobs = async (req: Request, res: Response) => {
 };
 export const updateProviderProfile = async (req: Request, res: Response) => {
   const userId = req.user!.id;
-  const { businessName, bio, experienceYears } = req.body;
+  const { 
+    businessName, bio, experienceYears,
+    bankAccountName, bankAccountNumber, bankIFSC, bankName 
+  } = req.body;
 
   try {
     const profile = await prisma.providerProfile.update({
@@ -119,6 +125,10 @@ export const updateProviderProfile = async (req: Request, res: Response) => {
         businessName: businessName || undefined,
         bio: bio || undefined,
         experienceYears: experienceYears ? parseInt(experienceYears) : undefined,
+        bankAccountName: bankAccountName || undefined,
+        bankAccountNumber: bankAccountNumber || undefined,
+        bankIFSC: bankIFSC || undefined,
+        bankName: bankName || undefined,
       },
     });
 
