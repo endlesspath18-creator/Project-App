@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_app/core/design_system.dart';
 import 'package:mobile_app/core/app_dimensions.dart';
+import 'package:mobile_app/providers/user_dashboard_provider.dart';
+
 
 class PromoBanner extends StatefulWidget {
   const PromoBanner({super.key});
@@ -113,6 +116,4 @@ class _PromoBannerState extends State<PromoBanner> {
       ),
     );
   }
-}
-
 }

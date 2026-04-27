@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_app/core/design_system.dart';
 import 'package:mobile_app/core/app_dimensions.dart';
+import 'package:mobile_app/providers/user_dashboard_provider.dart';
+
 
 class NearbyProviders extends StatelessWidget {
   const NearbyProviders({super.key});
