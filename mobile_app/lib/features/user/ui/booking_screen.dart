@@ -127,8 +127,8 @@ class _BookingScreenState extends State<BookingScreen> {
         _showSnackBar(bookingProvider.error ?? "Booking failed", isError: true);
       }
     } else {
-      // Step 1: Create Booking First (in PENDING status)
-      final booking = await bookingProvider.createBooking(
+      // One-Step Payment Flow: Create Booking & Order together
+      final response = await bookingProvider.createBooking(
         serviceId: _service.id,
         address: _addressController.text.trim(),
         scheduledDate: combinedDate,
@@ -136,26 +136,28 @@ class _BookingScreenState extends State<BookingScreen> {
         paymentMethod: "ONLINE",
       );
 
-      if (booking == null) {
+      if (response == null) {
         _showSnackBar(bookingProvider.error ?? "Failed to initialize booking", isError: true);
+        return;
+      }
+
+      final booking = response['booking'];
+      final orderData = response['razorpayOrder'];
+      final rzpKey = response['key'];
+
+      if (booking == null || orderData == null) {
+        _showSnackBar("Missing booking or payment data from server", isError: true);
         return;
       }
 
       setState(() => _currentBookingId = booking['id']);
 
-      // Step 2: Create Razorpay Order using bookingId
-      final orderData = await bookingProvider.createPaymentOrder(booking['id']);
-      if (orderData == null) {
-        _showSnackBar(bookingProvider.error ?? "Failed to initialize payment", isError: true);
-        return;
-      }
-
-      // Step 3: Open Razorpay Checkout
+      // Step 2: Open Razorpay Checkout immediately
       final options = {
-        'key': orderData['key'],
-        'amount': (orderData['amount'] * 100).toInt(), // amount in paise
+        'key': rzpKey,
+        'amount': orderData['amount'], // amount is already in paise from backend
         'name': 'EndlessPath Services',
-        'order_id': orderData['orderId'],
+        'order_id': orderData['id'],
         'description': _service.title,
         'prefill': {
           'contact': authProvider.user?.phone ?? '',
@@ -169,7 +171,7 @@ class _BookingScreenState extends State<BookingScreen> {
       debugPrint("[Razorpay] Opening checkout with: $options");
 
       try {
-        if (options['key'] == null || options['key'].isEmpty) {
+        if (rzpKey == null || rzpKey.isEmpty) {
           _showSnackBar("Razorpay Key is missing! Check backend ENV.", isError: true);
           return;
         }

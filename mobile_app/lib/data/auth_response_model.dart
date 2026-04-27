@@ -3,12 +3,14 @@ import 'package:mobile_app/data/user_model.dart';
 class AuthResponse {
   final UserModel? user;
   final String? token;
+  final String? refreshToken;
   final String? message;
   final bool success;
 
   AuthResponse({
     this.user,
     this.token,
+    this.refreshToken,
     this.message,
     required this.success,
   });
@@ -16,13 +18,22 @@ class AuthResponse {
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     // Extract token from possible locations in the response.
     String? extractedToken;
+    String? extractedRefreshToken;
+    
     if (json['token'] != null) {
       extractedToken = json['token'] as String?;
     } else if (json['accessToken'] != null) {
       extractedToken = json['accessToken'] as String?;
-    } else if (json['data'] != null && json['data'] is Map<String, dynamic>) {
+    }
+
+    if (json['refreshToken'] != null) {
+      extractedRefreshToken = json['refreshToken'] as String?;
+    }
+
+    if (json['data'] != null && json['data'] is Map<String, dynamic>) {
       final dataMap = json['data'] as Map<String, dynamic>;
-      extractedToken = dataMap['token'] ?? dataMap['accessToken'];
+      extractedToken ??= dataMap['token'] ?? dataMap['accessToken'];
+      extractedRefreshToken ??= dataMap['refreshToken'];
     }
 
     // Extract user from possible locations in the response.
@@ -39,6 +50,7 @@ class AuthResponse {
     return AuthResponse(
       user: extractedUser,
       token: extractedToken,
+      refreshToken: extractedRefreshToken,
       message: json['message'],
       success: json['success'] ?? (extractedToken != null),
     );

@@ -9,11 +9,10 @@ import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:mobile_app/providers/service_provider.dart';
 import 'package:mobile_app/providers/booking_provider.dart';
 import 'package:mobile_app/providers/dashboard_provider.dart';
-
-import 'package:mobile_app/features/auth/ui/auth_wrapper.dart';
-
+import 'package:mobile_app/providers/user_account_provider.dart';
 
 void main() async {
+
   WidgetsFlutterBinding.ensureInitialized();
   
   bool isFirebaseReady = false;
@@ -39,7 +38,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ServiceProvider()),
         ChangeNotifierProvider(create: (_) => BookingProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
+        ChangeNotifierProvider(create: (_) => UserDashboardProvider()),
+        ChangeNotifierProvider(create: (_) => UserAccountProvider()),
       ],
+
       child: MaterialApp(
         title: AppConstants.appName,
         theme: AppTheme.light,

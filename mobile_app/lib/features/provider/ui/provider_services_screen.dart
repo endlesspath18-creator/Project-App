@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:mobile_app/providers/service_provider.dart';
+import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:mobile_app/core/design_system.dart';
 import 'package:mobile_app/core/app_dimensions.dart';
+import 'package:mobile_app/core/app_routes.dart';
 import 'package:mobile_app/widgets/glass_widgets.dart';
 
 class ProviderServicesScreen extends StatefulWidget {
@@ -57,11 +59,45 @@ class _ProviderServicesScreenState extends State<ProviderServicesScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.pushNamed(context, '/addService'),
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text("New Service", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      floatingActionButton: Consumer<AuthProvider>(
+        builder: (context, auth, _) {
+          final isPaid = auth.user?.hasPaidPublishingFee == true;
+          return FloatingActionButton.extended(
+            onPressed: () async {
+              // Instant access if state is already verified
+              if (isPaid) {
+                Navigator.pushNamed(context, AppRoutes.addService);
+                return;
+              }
+
+              // Silent verification before showing activation screen
+              try {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                );
+                await auth.refreshUser();
+                if (context.mounted) Navigator.pop(context); // Close loader
+
+                if (auth.user?.hasPaidPublishingFee == true) {
+                  if (context.mounted) Navigator.pushNamed(context, AppRoutes.addService);
+                } else {
+                  if (context.mounted) Navigator.pushNamed(context, AppRoutes.providerActivation);
+                }
+              } catch (e) {
+                if (context.mounted) Navigator.pop(context);
+                if (context.mounted) Navigator.pushNamed(context, AppRoutes.providerActivation);
+              }
+            },
+            backgroundColor: isPaid ? AppColors.primary : Colors.amber,
+            icon: Icon(isPaid ? Icons.add_rounded : Icons.bolt_rounded, color: Colors.white),
+            label: Text(
+              isPaid ? "New Service" : "Activate Premium",
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          );
+        },
       ),
     );
   }

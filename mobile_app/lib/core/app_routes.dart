@@ -17,9 +17,15 @@ import 'package:mobile_app/features/provider/ui/add_service_screen.dart';
 import 'package:mobile_app/features/provider/ui/provider_earnings_screen.dart';
 import 'package:mobile_app/features/provider/ui/provider_services_screen.dart';
 import 'package:mobile_app/features/provider/ui/provider_activation_screen.dart';
+import 'package:mobile_app/features/provider/ui/premium_status_screen.dart';
 import 'package:mobile_app/features/profile/ui/profile_screen.dart';
+import 'package:mobile_app/features/profile/ui/edit_profile_screen.dart';
+import 'package:mobile_app/features/profile/ui/change_password_screen.dart';
+import 'package:mobile_app/features/user/account/ui/user_account_screen.dart';
 import 'package:mobile_app/features/splash/ui/motion_splash.dart';
 import 'package:mobile_app/features/admin/ui/admin_dashboard.dart';
+import 'package:mobile_app/features/admin/ui/admin_finance_screen.dart';
+
 
 class AppRoutes {
   static const String splash = '/';
@@ -51,7 +57,11 @@ class AppRoutes {
   static const String earnings = '/earnings';
   static const String providerServices = '/providerServices';
   static const String providerActivation = '/providerActivation';
+  static const String premiumStatus = '/premiumStatus';
   static const String availability = '/availability';
+  static const String editProfile = '/editProfile';
+  static const String changePassword = '/changePassword';
+  static const String adminFinance = '/adminFinance';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return {
@@ -70,11 +80,12 @@ class AppRoutes {
       search: (context) => const UserSearchScreen(),
       notifications: (context) => const NotificationsScreen(),
       
-      userProfile: (context) => const ProfileScreen(),
+      userProfile: (context) => const UserAccountScreen(),
       userFavorites: (context) => const UserFavoritesScreen(),
       userBookings: (context) => const BookingsView(isStandalone: true),
-      userSettings: (context) => const ProfileScreen(),
-      userHelp: (context) => const PlaceholderScreen(title: "Help & Support"),
+      userSettings: (context) => const UserAccountScreen(),
+      userHelp: (context) => const UserAccountScreen(), // Support is inside now
+
 
       // Provider Screens
       providerHome: (context) => const ProviderDashboard(),
@@ -82,10 +93,14 @@ class AppRoutes {
       earnings: (context) => const ProviderEarningsScreen(),
       providerServices: (context) => const ProviderServicesScreen(),
       providerActivation: (context) => const ProviderActivationScreen(),
+      premiumStatus: (context) => const PremiumStatusScreen(),
       availability: (context) => const PlaceholderScreen(title: "Availability"),
+      editProfile: (context) => const EditProfileScreen(),
+      changePassword: (context) => const ChangePasswordScreen(),
 
       // Admin Screens
       adminHome: (context) => const AdminDashboard(),
+      adminFinance: (context) => const AdminFinanceScreen(),
     };
   }
 }

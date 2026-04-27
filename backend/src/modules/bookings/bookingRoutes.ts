@@ -35,4 +35,9 @@ router.get("/provider", requireRole("PROVIDER"), getProviderBookings);
 router.get("/provider/dashboard", requireRole("PROVIDER"), getProviderDashboardData);
 router.patch("/:id/complete", requireRole("PROVIDER"), completeBooking);
 
+router.patch("/:id/cancel", protect, bookingController.cancelBooking);
+router.patch("/:id/reschedule", protect, bookingController.rescheduleBooking);
+router.post("/:id/retry-payment", protect, bookingController.retryPayment);
+
 export default router;
+

@@ -33,22 +33,15 @@ class HomeHeader extends StatelessWidget {
                     fontFamily: 'Outfit',
                   ),
                 ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on_rounded, size: 14, color: AppColors.primary),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Kukatpally, Hyderabad", // Example location
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                        fontFamily: 'Outfit',
-                      ),
-                    ),
-                    const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AppColors.textTertiary),
-                  ],
+                const SizedBox(height: 4),
+                const Text(
+                  "What are you looking for today?",
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                    fontFamily: 'Outfit',
+                  ),
                 ),
               ],
             ),

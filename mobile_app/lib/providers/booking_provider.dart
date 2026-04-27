@@ -131,22 +131,7 @@ class BookingProvider with ChangeNotifier {
     }
   }
 
-  // Razorpay Order Creation
-  Future<Map<String, dynamic>?> createPaymentOrder(String bookingId) async {
-    _setLoading(true);
-    _setError(null);
-    try {
-      final response = await ApiClient.post(AppConstants.paymentsCreateOrder, {'bookingId': bookingId});
-      if (response.statusCode == 201) return response.data['data'];
-      _setError(response.data['message'] ?? 'Failed to create payment order');
-      return null;
-    } catch (e) {
-      _setError('Payment Init Error: $e');
-      return null;
-    } finally {
-      _setLoading(false);
-    }
-  }
+  // Note: createPaymentOrder is now integrated into createBooking
 
   // Razorpay Verification
   Future<bool> verifyAndConfirmBooking({
@@ -159,12 +144,12 @@ class BookingProvider with ChangeNotifier {
     _setError(null);
     try {
       final response = await ApiClient.post(AppConstants.paymentsVerify, {
-        'razorpay_order_id': orderId,
-        'razorpay_payment_id': paymentId,
-        'razorpay_signature': signature,
+        'razorpayOrderId': orderId,
+        'razorpayPaymentId': paymentId,
+        'razorpaySignature': signature,
         'bookingId': bookingId,
       });
-      return response.statusCode == 201;
+      return response.statusCode == 200; // Success is now 200
     } catch (e) {
       _setError('Verification Error: $e');
       return false;

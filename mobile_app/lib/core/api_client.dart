@@ -117,52 +117,80 @@ class ApiClient {
   // ─── Public Methods ────────────────────────────────────────────────────────
 
   static Future<ApiResponse> post(String endpoint, Map<String, dynamic> body) async {
-    final url = Uri.parse('${AppConstants.baseUrl}$endpoint');
-    _log('FULL_REQUEST_URL: $url');
-    _log('POST $url');
-    try {
+    return _withRefresh(() async {
+      final url = Uri.parse('${AppConstants.baseUrl}$endpoint');
+      _log('POST $url');
       final headers = await _buildHeaders(endpoint);
       final response = await _executeWithRetry(
         () => http.post(url, headers: headers, body: jsonEncode(body)),
       );
       return _parseResponse(response);
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw _classify(e);
-    }
+    });
   }
 
   static Future<ApiResponse> get(String endpoint) async {
-    final url = Uri.parse('${AppConstants.baseUrl}$endpoint');
-    _log('GET $url');
-    try {
+    return _withRefresh(() async {
+      final url = Uri.parse('${AppConstants.baseUrl}$endpoint');
+      _log('GET $url');
       final headers = await _buildHeaders(endpoint);
       final response = await _executeWithRetry(
         () => http.get(url, headers: headers),
       );
       return _parseResponse(response);
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw _classify(e);
-    }
+    });
   }
 
   static Future<ApiResponse> patch(String endpoint, Map<String, dynamic> body) async {
-    final url = Uri.parse('${AppConstants.baseUrl}$endpoint');
-    _log('PATCH $url');
-    try {
+    return _withRefresh(() async {
+      final url = Uri.parse('${AppConstants.baseUrl}$endpoint');
+      _log('PATCH $url');
       final headers = await _buildHeaders(endpoint);
       final response = await _executeWithRetry(
         () => http.patch(url, headers: headers, body: jsonEncode(body)),
       );
       return _parseResponse(response);
-    } on ApiException {
+    });
+  }
+
+  static Future<ApiResponse> _withRefresh(Future<ApiResponse> Function() action) async {
+    try {
+      return await action();
+    } on UnauthorizedException {
+      _log('Unauthorized! Attempting token refresh...');
+      final success = await _performRefresh();
+      if (success) {
+        _log('Refresh successful. Retrying original request.');
+        return await action();
+      }
+      _log('Refresh failed. Redirecting to login.');
       rethrow;
-    } catch (e) {
-      throw _classify(e);
     }
+  }
+
+  static Future<bool> _performRefresh() async {
+    final refreshToken = await StorageService.getRefreshToken();
+    if (refreshToken == null) return false;
+
+    try {
+      final response = await http.post(
+        Uri.parse('${AppConstants.baseUrl}/auth/refresh'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refreshToken': refreshToken}),
+      ).timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // Note: The structure should match your backend response
+        final newToken = data['data']['accessToken'];
+        if (newToken != null) {
+          await StorageService.saveToken(newToken);
+          return true;
+        }
+      }
+    } catch (e) {
+      _log('REFRESH_TOKEN_API_ERROR: $e');
+    }
+    return false;
   }
 
   static ApiResponse _parseResponse(http.Response response) {

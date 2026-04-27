@@ -1,0 +1,1 @@
+export default function BookingSystemUpgrade(){return <div className='p-8 text-xl font-semibold'>Booking System Upgrade Canvas Initialized</div>}

@@ -14,12 +14,22 @@ class AppConstants {
   static const String userBookings = '/bookings/my';
   static const String providerBookings = '/bookings/provider';
   static const String createBooking = '/bookings';
-  static const String paymentsCreateOrder = '/payments/create-order';
-  static const String paymentsVerify = '/payments/verify';
+  static const String paymentsVerify = '/bookings/confirm-payment';
   
-  // Admin Endpoints
-  static const String adminStats = '/admin/stats';
-  static const String adminUsers = '/admin/users';
-  static const String adminProviders = '/admin/providers';
-  static const String adminBookings = '/admin/bookings';
+  // Me Endpoints
+  static const String meDashboard = '/me/dashboard';
+  static const String meBookings = '/me/bookings';
+  static const String meFavorites = '/me/favorites';
+  static const String mePayments = '/me/payments';
+  static const String meNotifications = '/me/notifications';
+  static const String meProfile = '/me/profile';
+  static const String meChangePassword = '/me/change-password';
+  static const String meLogoutAll = '/me/logout-all';
+  static const String meSupport = '/me/support/tickets';
+
+  // Booking Actions
+  static String cancelBooking(String id) => '/bookings/$id/cancel';
+  static String rescheduleBooking(String id) => '/bookings/$id/reschedule';
+  static String retryPayment(String id) => '/bookings/$id/retry-payment';
 }
+

@@ -6,7 +6,8 @@ import 'package:mobile_app/core/app_dimensions.dart';
 import 'package:mobile_app/core/app_routes.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:mobile_app/providers/service_provider.dart';
-import 'package:mobile_app/providers/booking_provider.dart';
+import 'package:mobile_app/providers/user_dashboard_provider.dart';
+import 'package:mobile_app/widgets/glass_widgets.dart';
 
 import 'widgets/promo_banner.dart';
 import 'widgets/category_grid.dart';
@@ -33,30 +34,22 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   }
 
   Future<void> _loadData() async {
-    final serviceProv = context.read<ServiceProvider>();
-    final bookingProv = context.read<BookingProvider>();
-    
     await Future.wait([
-      serviceProv.fetchAllServices(force: true),
-      bookingProv.fetchUserBookings(),
+      context.read<ServiceProvider>().fetchAllServices(force: true),
+      context.read<UserDashboardProvider>().fetchDashboard(force: true),
     ]);
   }
 
   @override
   Widget build(BuildContext context) {
+    final dashProvider = Provider.of<UserDashboardProvider>(context);
+    final stats = dashProvider.stats;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Background Glow
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: AppGradients.bgGlow,
-              ),
-            ),
-          ),
-          
+          Positioned.fill(child: Container(decoration: const BoxDecoration(gradient: AppGradients.bgGlow))),
           SafeArea(
             child: RefreshIndicator(
               onRefresh: _loadData,
@@ -64,32 +57,66 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
-                  // Top Header Section
-                  const SliverToBoxAdapter(
-                    child: HomeHeader(),
-                  ),
+                  const SliverToBoxAdapter(child: HomeHeader()),
                   
-                  // Search Section
+                  // Technical Activity Tracker (Premium SaaS Card)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      child: FadeInDown(
+                        child: GlassCard(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text("ACTIVE BOOKINGS", style: TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                                      const SizedBox(height: 4),
+                                      Text("${stats?.activeBookings.length ?? 0} In Progress", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                                    child: const Icon(Icons.speed_rounded, color: AppColors.primary, size: 20),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  _buildMiniStat("Total Spent", "₹${stats?.totalSpent.toInt() ?? 0}"),
+                                  const SizedBox(width: 24),
+                                  _buildMiniStat("Completed", "${stats?.completedCount ?? 0}"),
+                                  const SizedBox(width: 24),
+                                  _buildMiniStat("Savings", "₹450"),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
                   const SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.s24),
+                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       child: HomeSearchBar(),
                     ),
                   ),
                   
-                  const SliverToBoxAdapter(child: SizedBox(height: AppDimensions.s24)),
-                  
-                  // Promo Banner
                   SliverToBoxAdapter(
-                    child: FadeIn(
-                      duration: const Duration(milliseconds: 800),
-                      child: const PromoBanner(),
-                    ),
+                    child: FadeIn(child: const PromoBanner()),
                   ),
                   
-                  const SliverToBoxAdapter(child: SizedBox(height: AppDimensions.s24)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
                   
-                  // Categories Grid
                   SliverToBoxAdapter(
                     child: CategoryGrid(
                       onCategoryTap: (cat) {
@@ -102,28 +129,15 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     ),
                   ),
                   
-                  const SliverToBoxAdapter(child: SizedBox(height: AppDimensions.s24)),
+                  const SliverToBoxAdapter(child: AppSectionLabel(label: "Your Recent Activity")),
+                  const SliverToBoxAdapter(child: RecentBookings()),
                   
-                  // Recent Bookings (Horizontal scroll)
-                  const SliverToBoxAdapter(
-                    child: RecentBookings(),
-                  ),
+                  const SliverToBoxAdapter(child: AppSectionLabel(label: "Popular Services")),
+                  const SliverToBoxAdapter(child: PopularServices()),
                   
-                  const SliverToBoxAdapter(child: SizedBox(height: AppDimensions.s24)),
+                  const SliverToBoxAdapter(child: AppSectionLabel(label: "Service Providers Nearby")),
+                  const SliverToBoxAdapter(child: NearbyProviders()),
                   
-                  // Popular Services (Horizontal scroll)
-                  const SliverToBoxAdapter(
-                    child: PopularServices(),
-                  ),
-                  
-                  const SliverToBoxAdapter(child: SizedBox(height: AppDimensions.s24)),
-                  
-                  // Nearby Providers (Vertical list)
-                  const SliverToBoxAdapter(
-                    child: NearbyProviders(),
-                  ),
-                  
-                  // Bottom spacing
                   const SliverToBoxAdapter(child: SizedBox(height: 100)),
                 ],
               ),
@@ -131,6 +145,16 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMiniStat(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        Text(label, style: const TextStyle(color: AppColors.textTertiary, fontSize: 10)),
+      ],
     );
   }
 }

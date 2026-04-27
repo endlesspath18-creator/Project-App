@@ -50,9 +50,7 @@ class _ProviderDashboardState extends State<ProviderDashboard> {
       canPop: _currentIndex == 0,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        if (_currentIndex != 0) {
-          _onTabTapped(0);
-        }
+        if (_currentIndex != 0) _onTabTapped(0);
       },
       child: Scaffold(
         body: PageView(
@@ -61,19 +59,6 @@ class _ProviderDashboardState extends State<ProviderDashboard> {
           children: _pages,
         ),
         bottomNavigationBar: _buildBottomNav(context),
-        floatingActionButton: _currentIndex == 1 ? FloatingActionButton.extended(
-          onPressed: () {
-            final user = Provider.of<AuthProvider>(context, listen: false).user;
-            if (user?.hasPaidPublishingFee == true) {
-              Navigator.pushNamed(context, AppRoutes.addService);
-            } else {
-              Navigator.pushNamed(context, AppRoutes.providerActivation);
-            }
-          },
-          backgroundColor: AppColors.primary,
-          icon: const Icon(Icons.add_rounded, color: Colors.white),
-          label: const Text("Add Service", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        ) : null,
       ),
     );
   }
@@ -92,10 +77,10 @@ class _ProviderDashboardState extends State<ProviderDashboard> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(Icons.dashboard_outlined, Icons.dashboard_rounded, "Stats", 0),
-            _buildNavItem(Icons.business_center_outlined, Icons.business_center_rounded, "Jobs", 1),
-            _buildNavItem(Icons.wallet_outlined, Icons.account_balance_wallet_rounded, "Earnings", 2),
-            _buildNavItem(Icons.settings_outlined, Icons.settings_rounded, "Settings", 3),
+            _buildNavItem(Icons.dashboard_outlined, Icons.dashboard_rounded, "Overview", 0),
+            _buildNavItem(Icons.calendar_today_outlined, Icons.calendar_today_rounded, "Schedule", 1),
+            _buildNavItem(Icons.account_balance_wallet_outlined, Icons.account_balance_wallet_rounded, "Earnings", 2),
+            _buildNavItem(Icons.person_outline_rounded, Icons.person_rounded, "Profile", 3),
           ],
         ),
       ),
@@ -151,9 +136,8 @@ class _DashboardOverviewTabState extends State<_DashboardOverviewTab> {
 
   Future<void> _loadData() async {
     await Future.wait([
-      context.read<ServiceProvider>().fetchProviderServices(),
-      context.read<BookingProvider>().fetchProviderRequests(),
-      context.read<DashboardProvider>().fetchStats(),
+      context.read<AuthProvider>().refreshUser(),
+      context.read<DashboardProvider>().fetchStats(force: true),
     ]);
   }
 
@@ -161,7 +145,7 @@ class _DashboardOverviewTabState extends State<_DashboardOverviewTab> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final dashProvider = Provider.of<DashboardProvider>(context);
-    final user = authProvider.user;
+    final stats = dashProvider.stats;
 
     return Stack(
       children: [
@@ -172,64 +156,67 @@ class _DashboardOverviewTabState extends State<_DashboardOverviewTab> {
             color: AppColors.primary,
             child: CustomScrollView(
               slivers: [
+                // 1. Header
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(AppDimensions.s24),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
+                    padding: const EdgeInsets.all(24),
+                    child: FadeInDown(
+                      child: Row(
+                        children: [
+                          Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                                const Text("WELCOME BACK,", style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Text(user?.businessName ?? "Business Name", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                                    if (user?.hasPaidPublishingFee == true) ...[
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                        decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-                                        child: const Row(
-                                          children: [
-                                            Icon(Icons.verified_rounded, color: Colors.blue, size: 10),
-                                            SizedBox(width: 4),
-                                            Text("ACTIVATED", style: TextStyle(color: Colors.blue, fontSize: 8, fontWeight: FontWeight.bold)),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ],
-                            ),
+                              Text("HELLO 👋", style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                              const SizedBox(height: 4),
+                              Text(authProvider.user?.fullName?.split(' ')[0].toUpperCase() ?? "PROVIDER", 
+                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                            ],
                           ),
-                        _buildStatusToggle(dashProvider),
-                      ],
+                          const Spacer(),
+                          _buildStatusToggle(dashProvider),
+                        ],
+                      ),
                     ),
                   ),
                 ),
 
+                // 2. Earnings Card
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: FadeInUp(
                       child: GlassCard(
                         padding: const EdgeInsets.all(24),
-                        color: AppColors.primary.withValues(alpha: 0.03),
+                        color: AppColors.primary.withValues(alpha: 0.05),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("TOTAL EARNINGS", style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-                            const SizedBox(height: 8),
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text("₹${dashProvider.stats?.earnings.toInt() ?? 0}", style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-                                const Spacer(),
-                                const Icon(Icons.arrow_upward_rounded, color: Colors.green, size: 20),
-                                const Text(" 12%", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text("TODAY'S EARNINGS", style: TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
+                                    const SizedBox(height: 4),
+                                    Text("₹${stats?.todayEarnings.toInt() ?? 0}", style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                                  child: const Icon(Icons.account_balance_wallet_rounded, color: AppColors.primary),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            const Divider(color: AppColors.border),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _buildMiniStat("Total Jobs", "${stats?.completedJobs ?? 0}"),
+                                _buildMiniStat("Lifetime", "₹${stats?.totalEarnings.toInt() ?? 0}"),
+                                _buildMiniStat("Rating", "4.8 ⭐"),
                               ],
                             ),
                           ],
@@ -239,41 +226,58 @@ class _DashboardOverviewTabState extends State<_DashboardOverviewTab> {
                   ),
                 ),
 
-                SliverPadding(
-                  padding: const EdgeInsets.all(24),
-                  sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 1.5,
+                // 3. Quick Actions
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Row(
+                        children: [
+                          _buildActionChip(context, Icons.add_business_rounded, "Add Service", AppRoutes.addService),
+                          const SizedBox(width: 12),
+                          _buildActionChip(context, Icons.history_rounded, "Job History", null),
+                          const SizedBox(width: 12),
+                          _buildActionChip(context, Icons.verified_user_rounded, "Verify Account", null),
+                        ],
+                      ),
                     ),
-                    delegate: SliverChildListDelegate([
-                      _buildQuickStat("Total Jobs", "${dashProvider.stats?.completedJobs ?? 0}", Icons.task_alt_rounded),
-                      _buildQuickStat("AVG. Rating", "${dashProvider.stats?.rating ?? 0.0}", Icons.star_rounded),
-                    ]),
                   ),
                 ),
 
-                SliverToBoxAdapter(child: AppSectionLabel(label: "Recent Activity")),
+                // 4. Upcoming Jobs Section
+                SliverToBoxAdapter(child: AppSectionLabel(label: "Confirmed Upcoming Jobs")),
                 
-                Consumer<BookingProvider>(
-                  builder: (context, prov, _) {
-                    if (prov.isLoading) return const SliverToBoxAdapter(child: Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator())));
-                    if (prov.incomingRequests.isEmpty) return const SliverToBoxAdapter(child: Center(child: Padding(padding: EdgeInsets.all(48), child: Text("No recent requests", style: TextStyle(color: AppColors.textSecondary)))));
-                    
-                    return SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) => _SmallJobCard(booking: prov.incomingRequests[index]),
-                          childCount: prov.incomingRequests.length > 3 ? 3 : prov.incomingRequests.length,
+                if (dashProvider.isLoading)
+                  const SliverToBoxAdapter(child: Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator())))
+                else if (stats == null || stats.upcomingBookings.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(48),
+                        child: Column(
+                          children: [
+                            Opacity(opacity: 0.3, child: Icon(Icons.event_busy_rounded, size: 64, color: AppColors.textTertiary)),
+                            const SizedBox(height: 16),
+                            const Text("No upcoming jobs yet", style: TextStyle(color: AppColors.textSecondary)),
+                          ],
                         ),
                       ),
-                    );
-                  }
-                ),
-                SliverToBoxAdapter(child: SizedBox(height: 100)),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => _EnhancedJobCard(booking: stats.upcomingBookings[index]),
+                        childCount: stats.upcomingBookings.length,
+                      ),
+                    ),
+                  ),
+                
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
               ],
             ),
           ),
@@ -282,18 +286,27 @@ class _DashboardOverviewTabState extends State<_DashboardOverviewTab> {
     );
   }
 
-  Widget _buildQuickStat(String label, String value, IconData icon) {
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: AppColors.primary, size: 20),
-          const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10)),
-        ],
+  Widget _buildMiniStat(String label, String value) {
+    return Column(
+      children: [
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 10)),
+      ],
+    );
+  }
+
+  Widget _buildActionChip(BuildContext context, IconData icon, String label, String? route) {
+    return GestureDetector(
+      onTap: route != null ? () => Navigator.pushNamed(context, route) : null,
+      child: GlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          ],
+        ),
       ),
     );
   }
@@ -321,353 +334,115 @@ class _DashboardOverviewTabState extends State<_DashboardOverviewTab> {
   }
 }
 
-// ─── JOBS MANAGEMENT TAB ────────────────────────────────────────────────────
+// ─── ENHANCED JOB CARD (SaaS GRADE) ──────────────────────────────────────────
 
-class _JobsManageTab extends StatefulWidget {
-  const _JobsManageTab();
-
-  @override
-  State<_JobsManageTab> createState() => _JobsManageTabState();
-}
-
-class _JobsManageTabState extends State<_JobsManageTab> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Jobs Management", style: TextStyle(fontWeight: FontWeight.bold)),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.primary,
-          tabs: const [
-            Tab(text: "Requests"),
-            Tab(text: "Active"),
-            Tab(text: "History"),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          _RequestListView(),
-          _ActiveJobListView(),
-          _HistoryListView(),
-        ],
-      ),
-    );
-  }
-}
-
-class _RequestListView extends StatelessWidget {
-  const _RequestListView();
-
-  @override
-  Widget build(BuildContext context) {
-     final bookingProvider = Provider.of<BookingProvider>(context);
-     final requests = bookingProvider.pendingRequests;
-     
-     if (requests.isEmpty) {
-       return Center(
-         child: Column(
-           mainAxisAlignment: MainAxisAlignment.center,
-           children: [
-             Opacity(opacity: 0.5, child: Icon(Icons.notifications_paused_rounded, size: 64, color: AppColors.textTertiary)),
-             const SizedBox(height: 16),
-             const Text("No pending requests", style: TextStyle(color: AppColors.textSecondary)),
-           ],
-         ),
-       );
-     }
-     
-     return ListView.builder(
-       padding: const EdgeInsets.all(24),
-       itemCount: requests.length,
-       itemBuilder: (context, index) => _FullJobCard(booking: requests[index]),
-     );
-  }
-}
-
-class _ActiveJobListView extends StatelessWidget {
-  const _ActiveJobListView();
-
-  @override
-  Widget build(BuildContext context) {
-     final bookingProvider = Provider.of<BookingProvider>(context);
-     final jobs = bookingProvider.activeJobsList;
-     
-     if (jobs.isEmpty) {
-       return Center(
-         child: Column(
-           mainAxisAlignment: MainAxisAlignment.center,
-           children: [
-             Opacity(opacity: 0.5, child: Icon(Icons.business_center_outlined, size: 64, color: AppColors.textTertiary)),
-             const SizedBox(height: 16),
-             const Text("No active jobs", style: TextStyle(color: AppColors.textSecondary)),
-           ],
-         ),
-       );
-     }
-     
-     return ListView.builder(
-       padding: const EdgeInsets.all(24),
-       itemCount: jobs.length,
-       itemBuilder: (context, index) => _FullJobCard(booking: jobs[index]),
-     );
-  }
-}
-
-class _HistoryListView extends StatelessWidget {
-  const _HistoryListView();
-
-  @override
-  Widget build(BuildContext context) {
-     final bookingProvider = Provider.of<BookingProvider>(context);
-     final history = bookingProvider.jobHistoryList;
-     
-     if (history.isEmpty) {
-       return const Center(child: Text("No job history", style: TextStyle(color: AppColors.textSecondary)));
-     }
-     
-     return ListView.builder(
-       padding: const EdgeInsets.all(24),
-       itemCount: history.length,
-       itemBuilder: (context, index) => _FullJobCard(booking: history[index]),
-     );
-  }
-}
-
-// ─── EARNINGS TAB ────────────────────────────────────────────────────────────
-
-class _EarningsTab extends StatelessWidget {
-  const _EarningsTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Earnings")),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            GlassCard(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  const Text("AVAILABLE FOR WITHDRAWAL", style: TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  const Text("₹12,450.00", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  GlassButton(onPressed: () {}, text: "Withdraw to Bank"),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            AppSectionLabel(label: "Recent Transactions"),
-            Expanded(
-              child: ListView.builder(
-                itemCount: 5,
-                itemBuilder: (context, index) => _TransactionItem(index: index),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TransactionItem extends StatelessWidget {
-  final int index;
-  const _TransactionItem({required this.index});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: const CircleAvatar(backgroundColor: Color(0xFFE8F5E9), child: Icon(Icons.arrow_downward_rounded, color: Colors.green)),
-      title: const Text("Payment for Home Cleaning"),
-      subtitle: const Text("24 April 2026"),
-      trailing: const Text("+₹450", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-      contentPadding: const EdgeInsets.symmetric(vertical: 8),
-    );
-  }
-}
-
-// ─── CARDS ──────────────────────────────────────────────────────────────────
-
-class _SmallJobCard extends StatelessWidget {
+class _EnhancedJobCard extends StatelessWidget {
   final dynamic booking;
-  const _SmallJobCard({required this.booking});
+  const _EnhancedJobCard({required this.booking});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       child: GlassCard(
-        padding: const EdgeInsets.all(16),
-        child: Row(
+        padding: const EdgeInsets.all(20),
+        child: Column(
           children: [
-            const Icon(Icons.circle, size: 10, color: AppColors.primary),
-            const SizedBox(width: 12),
-            Expanded(child: Text(booking['user']['fullName'], style: const TextStyle(fontWeight: FontWeight.w600))),
-            Text("₹${booking['amount']}", style: const TextStyle(fontWeight: FontWeight.bold)),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.person_rounded, color: AppColors.primary, size: 20),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(booking['user']['fullName'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(booking['service']['title'], style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                Text("₹${booking['amount']}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                _buildInfoTag(Icons.access_time_rounded, booking['slot'] ?? "Anytime"),
+                const SizedBox(width: 12),
+                _buildInfoTag(Icons.location_on_rounded, "Current Address"),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {}, 
+                    icon: const Icon(Icons.phone_rounded, size: 18),
+                    label: const Text("Call User"),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.blue,
+                      side: const BorderSide(color: Colors.blue),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      // Logic to mark as completed
+                      final success = await context.read<BookingProvider>().updateStatus(booking['id'], 'complete');
+                      if (success && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Job Completed! 🎊"), backgroundColor: Colors.green));
+                        context.read<DashboardProvider>().fetchStats(force: true);
+                      }
+                    }, 
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text("Mark Done"),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
-}
 
-class _FullJobCard extends StatelessWidget {
-  final dynamic booking;
-  const _FullJobCard({required this.booking});
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isPaid = booking['paymentStatus'] == 'PAID';
-    final String method = booking['paymentMethod'] ?? 'COD';
-
-    return GlassCard(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      child: Column(
+  Widget _buildInfoTag(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(6), border: Border.all(color: AppColors.border)),
+      child: Row(
         children: [
-          Row(
-            children: [
-              CircleAvatar(backgroundColor: AppColors.primary.withValues(alpha: 0.1), child: const Icon(Icons.person, color: AppColors.primary)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(booking['user']['fullName'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text(booking['service']['title'], style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text("₹${booking['amount']}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: isPaid ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      isPaid ? "PAID" : "UNPAID",
-                      style: TextStyle(color: isPaid ? Colors.green : Colors.orange, fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(method == 'COD' ? Icons.money : Icons.account_balance_wallet, size: 14, color: AppColors.textTertiary),
-              Text(" $method", style: const TextStyle(color: AppColors.textTertiary, fontSize: 12)),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  booking['status'] ?? 'PENDING', 
-                  style: const TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold)
-                ),
-              ),
-            ],
-          ),
-          
-          if (booking['status'] == 'PENDING') ...[
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: GlassButton(
-                    onPressed: () async {
-                      final success = await Provider.of<BookingProvider>(context, listen: false).updateStatus(booking['id'], 'reject');
-                      if (success && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Booking rejected")));
-                      }
-                    }, 
-                    text: "Reject", 
-                    isPrimary: false
-                  )
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GlassButton(
-                    onPressed: () async {
-                      final success = await Provider.of<BookingProvider>(context, listen: false).updateStatus(booking['id'], 'accept');
-                      if (success && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Booking accepted! 🎉"), backgroundColor: Colors.green));
-                      }
-                    }, 
-                    text: "Accept"
-                  )
-                ),
-              ],
-            ),
-          ] else if (booking['status'] == 'ACCEPTED') ...[
-            const SizedBox(height: 20),
-            GlassButton(
-               onPressed: () async {
-                  final success = await Provider.of<BookingProvider>(context, listen: false).updateStatus(booking['id'], 'start');
-                  if (success && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Job started!"), backgroundColor: Colors.orange));
-                  }
-               },
-               text: "Start Job",
-            ),
-          ] else if (booking['status'] == 'IN_PROGRESS') ...[
-            const SizedBox(height: 20),
-            GlassButton(
-               onPressed: () async {
-                  final success = await Provider.of<BookingProvider>(context, listen: false).updateStatus(booking['id'], 'complete');
-                  if (success && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Job marked as completed!"), backgroundColor: Colors.blue));
-                  }
-               },
-               text: "Mark as Completed",
-            ),
-          ],
+          Icon(icon, size: 12, color: AppColors.textTertiary),
+          const SizedBox(width: 4),
+          Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
         ],
       ),
     );
   }
 }
 
-class _AccountItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-  final bool isDestructive;
+// ─── PLACEHOLDER TABS ────────────────────────────────────────────────────────
 
-  const _AccountItem(this.icon, this.title, this.onTap, {this.isDestructive = false});
-
+class _JobsManageTab extends StatelessWidget {
+  const _JobsManageTab();
   @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      leading: Icon(icon, color: isDestructive ? AppColors.error : AppColors.primary),
-      title: Text(title, style: TextStyle(fontWeight: FontWeight.w500, color: isDestructive ? AppColors.error : AppColors.textPrimary)),
-      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-      contentPadding: EdgeInsets.zero,
-    );
-  }
+  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text("Full Schedule View")));
+}
+
+class _EarningsTab extends StatelessWidget {
+  const _EarningsTab();
+  @override
+  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text("Detailed Wallet View")));
 }

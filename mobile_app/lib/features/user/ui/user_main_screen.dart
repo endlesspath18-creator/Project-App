@@ -5,7 +5,7 @@ import 'package:mobile_app/features/user/home/user_home_screen.dart';
 import 'package:mobile_app/features/user/ui/bookings_view.dart';
 import 'package:mobile_app/features/user/ui/user_search_screen.dart';
 import 'package:mobile_app/features/user/ui/user_favorites_screen.dart';
-import 'package:mobile_app/features/profile/ui/profile_screen.dart';
+import 'package:mobile_app/features/user/account/ui/user_account_screen.dart';
 
 class UserMainScreen extends StatefulWidget {
   const UserMainScreen({super.key});
@@ -23,8 +23,9 @@ class _UserMainScreenState extends State<UserMainScreen> {
     const UserSearchScreen(),
     const BookingsView(isStandalone: true),
     const UserFavoritesScreen(),
-    const ProfileScreen(),
+    const UserAccountScreen(),
   ];
+
 
   @override
   void dispose() {

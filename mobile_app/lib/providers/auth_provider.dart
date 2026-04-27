@@ -56,7 +56,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('AUTH_CHECK_ERROR: $e');
       if (e is UnauthorizedException) {
-        await StorageService.deleteToken();
+        await StorageService.deleteTokens();
       }
     } finally {
       _isInitialized = true;
@@ -77,6 +77,9 @@ class AuthProvider extends ChangeNotifier {
       final authResponse = AuthResponse.fromJson(response.data);
       if (authResponse.token != null) {
         await StorageService.saveToken(authResponse.token!);
+        if (authResponse.refreshToken != null) {
+          await StorageService.saveRefreshToken(authResponse.refreshToken!);
+        }
         _user = authResponse.user;
         _setLoading(false);
         return true;
@@ -118,6 +121,9 @@ class AuthProvider extends ChangeNotifier {
 
       if (authResponse.token != null) {
         await StorageService.saveToken(authResponse.token!);
+        if (authResponse.refreshToken != null) {
+          await StorageService.saveRefreshToken(authResponse.refreshToken!);
+        }
         _user = authResponse.user;
       }
       _setLoading(false);
@@ -146,9 +152,55 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // ─── Toggle Availability (Provider) ─────────────────────────────────────────
+  Future<bool> toggleAvailability() async {
+    try {
+      final response = await ApiClient.patch('/provider/availability', {});
+      if (response.statusCode == 200) {
+        await refreshUser();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('TOGGLE_AVAILABILITY_ERROR: $e');
+      return false;
+    }
+  }
+
+  // ─── Update Profile (Generic) ──────────────────────────────────────────────
+  Future<bool> updateProfile({String? fullName, String? phone, String? businessName}) async {
+    _setLoading(true);
+    try {
+      // First update generic user info
+      if (fullName != null || phone != null) {
+        await ApiClient.patch(AppConstants.meProfile, {
+          'fullName': fullName,
+          'phone': phone,
+        });
+      }
+
+
+      // If provider, update business name
+      if (isProvider && businessName != null) {
+        await ApiClient.patch('/provider/profile', {
+          'businessName': businessName,
+        });
+      }
+
+      await refreshUser();
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      debugPrint('UPDATE_PROFILE_ERROR: $e');
+      _setError('Failed to update profile');
+      _setLoading(false);
+      return false;
+    }
+  }
+
   // ─── Logout ────────────────────────────────────────────────────────────────
   Future<void> logout() async {
-    await StorageService.deleteToken();
+    await StorageService.deleteTokens();
     _user = null;
     _error = null;
     notifyListeners();

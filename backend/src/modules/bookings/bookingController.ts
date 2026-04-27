@@ -88,7 +88,11 @@ export const createBooking = async (req: Request, res: Response) => {
         }
       });
 
-      return { booking: finalBooking, razorpayOrder: order };
+      return { 
+        booking: finalBooking, 
+        razorpayOrder: order,
+        key: env.RAZORPAY_KEY_ID
+      };
     });
 
     sendResponse(res, 201, "Booking initiated. Complete payment to confirm.", result);
@@ -385,3 +389,109 @@ export const getUserDashboardData = async (req: Request, res: Response) => {
     sendError(res, 500, "Failed to fetch dashboard data");
   }
 };
+
+export const cancelBooking = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user!.id;
+
+  try {
+    const booking = await prisma.booking.findUnique({ where: { id } });
+    if (!booking || booking.userId !== userId) {
+      return sendError(res, 404, "Booking not found");
+    }
+
+    if (["COMPLETED", "CANCELLED", "REJECTED"].includes(booking.status)) {
+      return sendError(res, 400, "Booking cannot be cancelled in its current state");
+    }
+
+    const updated = await prisma.booking.update({
+      where: { id },
+      data: { status: "CANCELLED" }
+    });
+
+    await prisma.bookingEvent.create({
+      data: {
+        bookingId: id,
+        fromStatus: booking.status,
+        toStatus: "CANCELLED",
+        actorId: userId,
+        meta: { reason: req.body.reason || "Cancelled by user" }
+      }
+    });
+
+    sendResponse(res, 200, "Booking cancelled successfully", updated);
+  } catch (error) {
+    sendError(res, 500, "Failed to cancel booking");
+  }
+};
+
+export const rescheduleBooking = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { scheduledDate, slot } = req.body;
+  const userId = req.user!.id;
+
+  try {
+    const booking = await prisma.booking.findUnique({ where: { id } });
+    if (!booking || booking.userId !== userId) {
+      return sendError(res, 404, "Booking not found");
+    }
+
+    const updated = await prisma.booking.update({
+      where: { id },
+      data: {
+        dateTime: new Date(scheduledDate),
+        slot,
+        status: "PENDING" // Reset to pending if it was accepted? Or keep confirmed?
+      }
+    });
+
+    await prisma.bookingEvent.create({
+      data: {
+        bookingId: id,
+        fromStatus: booking.status,
+        toStatus: "PENDING",
+        actorId: userId,
+        meta: { oldDate: booking.dateTime, newDate: scheduledDate }
+      }
+    });
+
+    sendResponse(res, 200, "Booking rescheduled successfully", updated);
+  } catch (error) {
+    sendError(res, 500, "Failed to reschedule booking");
+  }
+};
+
+export const retryPayment = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user!.id;
+
+  try {
+    const booking = await prisma.booking.findUnique({ 
+      where: { id },
+      include: { service: true }
+    });
+
+    if (!booking || booking.userId !== userId) {
+      return sendError(res, 404, "Booking not found");
+    }
+
+    if (booking.paymentStatus === "PAID") {
+      return sendError(res, 400, "Booking is already paid");
+    }
+
+    const order = await createRazorpayOrder(booking.amount, booking.id);
+
+    const updated = await prisma.booking.update({
+      where: { id },
+      data: { orderId: order.id }
+    });
+
+    sendResponse(res, 200, "Payment retry initiated", {
+      booking: updated,
+      razorpayOrder: order
+    });
+  } catch (error) {
+    sendError(res, 500, "Failed to retry payment");
+  }
+};
+

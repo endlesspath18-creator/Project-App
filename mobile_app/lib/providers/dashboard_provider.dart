@@ -2,30 +2,31 @@ import 'package:flutter/foundation.dart';
 import 'package:mobile_app/core/api_client.dart';
 
 class DashboardStats {
-  final double earnings;
+  final double totalEarnings;
   final int completedJobs;
-  final int pendingRequests;
-  final int activeJobs;
-  final double rating;
+  final double todayEarnings;
+  final List<dynamic> upcomingBookings;
+  final List<dynamic> recentReviews;
   final bool isOnline;
 
   DashboardStats({
-    required this.earnings,
+    required this.totalEarnings,
     required this.completedJobs,
-    required this.pendingRequests,
-    required this.activeJobs,
-    required this.rating,
+    required this.todayEarnings,
+    required this.upcomingBookings,
+    required this.recentReviews,
     required this.isOnline,
   });
 
   factory DashboardStats.fromJson(Map<String, dynamic> json) {
+    // Highly defensive parsing to prevent 'type Null is not a subtype of double'
     return DashboardStats(
-      earnings: (json['earnings'] as num?)?.toDouble() ?? 0.0,
-      completedJobs: json['completedJobs'] ?? 0,
-      pendingRequests: json['pendingRequests'] ?? 0,
-      activeJobs: json['activeJobs'] ?? 0,
-      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-      isOnline: json['isOnline'] ?? true,
+      totalEarnings: double.tryParse(json['totalEarnings']?.toString() ?? '0') ?? 0.0,
+      completedJobs: int.tryParse(json['completedJobs']?.toString() ?? '0') ?? 0,
+      todayEarnings: double.tryParse(json['todayEarnings']?.toString() ?? '0') ?? 0.0,
+      upcomingBookings: json['upcomingBookings'] as List? ?? [],
+      recentReviews: json['recentReviews'] as List? ?? [],
+      isOnline: json['isOnline'] == true,
     );
   }
 }
@@ -51,33 +52,35 @@ class DashboardProvider with ChangeNotifier {
     _setLoading(true);
     _error = null;
     try {
-      final response = await ApiClient.get('/provider/dashboard');
+      // Corrected endpoint path based on new backend structure
+      // Prefixed with bookings to match app.use('/api/bookings', bookingRoutes)
+      final response = await ApiClient.get('/bookings/provider/dashboard');
       if (response.statusCode == 200) {
-        _stats = DashboardStats.fromJson(response.data['data']);
+        if (response.data['data'] != null) {
+          _stats = DashboardStats.fromJson(response.data['data']);
+        }
+        notifyListeners();
       }
     } catch (e) {
       if (e.toString().contains('403')) {
         debugPrint('GUARD: Blocked unauthorized fetchStats');
       } else {
         _error = 'Failed to load dashboard: $e';
+        debugPrint('Dashboard Error Detail: $e');
       }
     } finally {
       _setLoading(false);
     }
   }
 
-  // Support for Online/Offline toggle (UI requirement)
   Future<void> toggleOnline() async {
-    // Current profile update endpoint not yet tailored for boolean toggle, 
-    // but we can prepare the provider state. 
-    // We will assume 'providerProfile' update handles this or add endpoint later.
     if (_stats == null) return;
     
     _setLoading(true);
     try {
-      // Placeholder for actual API call
-      // await ApiClient.put('/provider/profile', {'isOnline': !_stats!.isOnline});
-      await fetchStats(); 
+      // Note: Backend profile availability toggle endpoint is /api/provider/availability
+      await ApiClient.patch('/provider/availability', {});
+      await fetchStats(force: true); 
     } catch (e) {
       _error = 'Failed to toggle status: $e';
     } finally {

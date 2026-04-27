@@ -4,6 +4,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:mobile_app/core/api_client.dart';
+import 'package:mobile_app/core/app_routes.dart';
 import 'package:mobile_app/core/design_system.dart';
 import 'package:mobile_app/core/app_dimensions.dart';
 import 'package:mobile_app/widgets/glass_widgets.dart';
@@ -57,7 +58,13 @@ class _ProviderActivationScreenState extends State<ProviderActivationScreen> {
 
       _razorpay.open(options);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error creating order: $e")));
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains("already activated") || errorStr.contains("already paid")) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Premium active! Opening Add Service..."), duration: Duration(seconds: 1)));
+        if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.addService);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+      }
     } finally {
       setState(() => _isLoading = false);
     }
@@ -77,7 +84,7 @@ class _ProviderActivationScreenState extends State<ProviderActivationScreen> {
         await context.read<AuthProvider>().refreshUser();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Account Activated Successfully! 🎉"), backgroundColor: Colors.green));
-          Navigator.pop(context, true); // Return success
+          Navigator.pushReplacementNamed(context, AppRoutes.addService);
         }
       }
     } catch (e) {
@@ -155,7 +162,7 @@ class _ProviderActivationScreenState extends State<ProviderActivationScreen> {
           FadeInUp(
             delay: const Duration(milliseconds: 100),
             child: Text(
-              "Join our network of top-tier service providers and start growing your business today.",
+              "Complete ₹300 activation to join our network of top-tier service providers and start growing your business today.",
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14, height: 1.5),
             ),
