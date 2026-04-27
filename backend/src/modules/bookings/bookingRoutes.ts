@@ -1,14 +1,6 @@
 import { Router } from "express";
-import {
-  createBooking,
-  getUserBookings,
-  getProviderBookings,
-  getProviderDashboardData,
-  getUserDashboardData,
-  confirmPayment,
-  completeBooking,
-  handlePaymentWebhook
-} from "./bookingController";
+import * as bookingController from "./bookingController";
+
 import { protect } from "../../middleware/authMiddleware";
 import { requireRole } from "../../middleware/roleMiddleware";
 import { validate } from "../../middleware/validate";
@@ -19,21 +11,24 @@ const router = Router();
 
 // ─── Public/Webhook Routes (No Auth) ──────────────────────────────────────────
 // In a real app, this should have signature verification middleware
-router.post("/webhook/razorpay", handlePaymentWebhook);
+router.post("/webhook/razorpay", bookingController.handlePaymentWebhook);
+
 
 // ─── Protected Routes ──────────────────────────────────────────────────────────
 router.use(protect);
 
 // User Routes
-router.post("/", requireRole("USER"), validate(createBookingSchema), createBooking);
-router.get("/user/dashboard", requireRole("USER"), getUserDashboardData);
-router.get("/my", requireRole("USER"), getUserBookings);
-router.post("/confirm-payment", requireRole("USER"), confirmPayment);
+router.post("/", requireRole("USER"), validate(createBookingSchema), bookingController.createBooking);
+router.get("/user/dashboard", requireRole("USER"), bookingController.getUserDashboardData);
+router.get("/my", requireRole("USER"), bookingController.getUserBookings);
+router.post("/confirm-payment", requireRole("USER"), bookingController.confirmPayment);
+
 
 // Provider Routes
-router.get("/provider", requireRole("PROVIDER"), getProviderBookings);
-router.get("/provider/dashboard", requireRole("PROVIDER"), getProviderDashboardData);
-router.patch("/:id/complete", requireRole("PROVIDER"), completeBooking);
+router.get("/provider", requireRole("PROVIDER"), bookingController.getProviderBookings);
+router.get("/provider/dashboard", requireRole("PROVIDER"), bookingController.getProviderDashboardData);
+router.patch("/:id/complete", requireRole("PROVIDER"), bookingController.completeBooking);
+
 
 router.patch("/:id/cancel", protect, bookingController.cancelBooking);
 router.patch("/:id/reschedule", protect, bookingController.rescheduleBooking);
