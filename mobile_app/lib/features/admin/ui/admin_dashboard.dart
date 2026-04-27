@@ -26,11 +26,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
           index: _currentIndex,
           children: [
             const _AdminHomeTab(),
-            const Center(child: Text("Admin Panel Overview")),
+            const _AdminSecurityTab(),
             const Center(child: Text("General Settings")),
             const Center(child: Text("Provider Accounts Controller")),
           ],
         ),
+
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -241,6 +242,164 @@ class _AdminHomeTabState extends State<_AdminHomeTab> {
     }
   }
 }
+
+class _AdminSecurityTab extends StatefulWidget {
+  const _AdminSecurityTab();
+  @override
+  State<_AdminSecurityTab> createState() => _AdminSecurityTabState();
+}
+
+class _AdminSecurityTabState extends State<_AdminSecurityTab> {
+  bool _isLoading = true;
+  List<dynamic> _users = [];
+  bool _maintenanceMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUsers();
+  }
+
+  Future<void> _fetchUsers() async {
+    setState(() => _isLoading = true);
+    try {
+      final response = await ApiClient.get('/admin/users');
+      setState(() {
+        _users = response.data['data'] ?? [];
+      });
+    } catch (e) {
+      debugPrint('Security load error: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _toggleUserStatus(String id) async {
+    try {
+      await ApiClient.patch('/admin/users/$id/toggle-status', {});
+      _fetchUsers();
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("User status updated successfully")));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to update status: $e")));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("MODERATION", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 12)),
+              const SizedBox(height: 8),
+              const Text("Security Center", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+              
+              // Global Security Controls
+              _buildGlobalControls(),
+              const SizedBox(height: 24),
+              
+              const Text("USER INTERFERENCE", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+            ],
+          ),
+        ),
+        
+        Expanded(
+          child: _isLoading 
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+                onRefresh: _fetchUsers,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: _users.length,
+                  itemBuilder: (context, index) => _buildUserModerationTile(_users[index]),
+                ),
+              ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGlobalControls() {
+    return GlassCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.security_rounded, color: Colors.red, size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Maintenance Mode", style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text("Prevent user access globally", style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                  ],
+                ),
+              ),
+              Switch(
+                value: _maintenanceMode,
+                onChanged: (v) => setState(() => _maintenanceMode = v),
+                activeColor: Colors.red,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserModerationTile(dynamic user) {
+    final bool isActive = user['isActive'] ?? true;
+    
+    return GlassCard(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+            child: Text(user['fullName']?[0] ?? 'U', style: const TextStyle(color: AppColors.primary)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(user['fullName'] ?? 'Unknown User', style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(user['email'] ?? '', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+              ],
+            ),
+          ),
+          Column(
+            children: [
+              Text(isActive ? "ACTIVE" : "BANNED", style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: isActive ? Colors.green : Colors.red)),
+              Transform.scale(
+                scale: 0.8,
+                child: Switch(
+                  value: isActive,
+                  onChanged: (v) => _toggleUserStatus(user['id']),
+                  activeColor: Colors.green,
+                  inactiveTrackColor: Colors.red.withValues(alpha: 0.2),
+                  inactiveThumbColor: Colors.red,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 
 
 
