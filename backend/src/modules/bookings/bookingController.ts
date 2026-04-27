@@ -131,6 +131,11 @@ export const confirmPayment = async (req: Request, res: Response) => {
       const booking = await tx.booking.findUnique({ where: { id: bookingId } });
       if (!booking || booking.userId !== userId) throw new Error("AUTH_ERROR");
 
+      // Verify that this payment is for the correct Razorpay Order tied to this booking
+      if (booking.orderId !== razorpayOrderId) {
+        throw new Error("ORDER_MISMATCH");
+      }
+
       const updated = await tx.booking.update({
         where: { id: bookingId },
         data: {
@@ -166,9 +171,50 @@ export const confirmPayment = async (req: Request, res: Response) => {
     });
 
     sendResponse(res, 200, "Payment confirmed successfully", result);
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "AUTH_ERROR") return sendError(res, 401, "Not authorized to confirm this booking");
+    if (error.message === "ORDER_MISMATCH") return sendError(res, 400, "Payment order ID does not match booking records");
     console.error("Payment Confirmation Error:", error);
     sendError(res, 500, "Payment confirmation failed");
+  }
+};
+
+/**
+ * Explicitly mark a booking as failed if user cancels payment or gateway fails.
+ */
+export const handlePaymentFailure = async (req: Request, res: Response) => {
+  const { bookingId, reason } = req.body;
+  const userId = req.user!.id;
+
+  try {
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!booking || booking.userId !== userId) return sendError(res, 404, "Booking not found");
+
+    if (booking.status !== "PAYMENT_PENDING") {
+      return sendError(res, 400, "Only pending payments can be marked as failed");
+    }
+
+    const updated = await prisma.booking.update({
+      where: { id: bookingId },
+      data: { 
+        status: "PAYMENT_FAILED",
+        holdExpiresAt: null // Release slot
+      }
+    });
+
+    await prisma.bookingEvent.create({
+      data: {
+        bookingId,
+        fromStatus: "PAYMENT_PENDING",
+        toStatus: "PAYMENT_FAILED",
+        actorId: userId,
+        meta: { reason: reason || "User cancelled payment or gateway timeout" }
+      }
+    });
+
+    sendResponse(res, 200, "Booking updated to failed state", updated);
+  } catch (error) {
+    sendError(res, 500, "Failed to update booking status");
   }
 };
 
@@ -494,6 +540,29 @@ export const retryPayment = async (req: Request, res: Response) => {
     });
   } catch (error) {
     sendError(res, 500, "Failed to retry payment");
+  }
+};
+
+/**
+ * Scheduled cleanup for abandoned bookings (e.g. locks that never paid)
+ * Can be called by a cron job or admin manually.
+ */
+export const cleanupExpiredBookings = async (req: Request, res: Response) => {
+  try {
+    const expiredCount = await prisma.booking.updateMany({
+      where: {
+        status: "PAYMENT_PENDING",
+        holdExpiresAt: { lt: new Date() }
+      },
+      data: {
+        status: "EXPIRED",
+        holdExpiresAt: null
+      }
+    });
+
+    sendResponse(res, 200, `${expiredCount.count} abandoned bookings marked as EXPIRED`);
+  } catch (error) {
+    sendError(res, 500, "Cleanup failed");
   }
 };
 

@@ -22,6 +22,8 @@ router.post("/", requireRole("USER"), validate(createBookingSchema), bookingCont
 router.get("/user/dashboard", requireRole("USER"), bookingController.getUserDashboardData);
 router.get("/my", requireRole("USER"), bookingController.getUserBookings);
 router.post("/confirm-payment", requireRole("USER"), bookingController.confirmPayment);
+router.post("/payment-failure", requireRole("USER"), bookingController.handlePaymentFailure);
+router.post("/cleanup-expired", protect, adminOnly, bookingController.cleanupExpiredBookings);
 
 
 // Provider Routes

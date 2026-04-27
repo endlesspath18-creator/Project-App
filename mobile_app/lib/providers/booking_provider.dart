@@ -149,7 +149,7 @@ class BookingProvider with ChangeNotifier {
         'razorpaySignature': signature,
         'bookingId': bookingId,
       });
-      return response.statusCode == 200; // Success is now 200
+      return response.statusCode == 200;
     } catch (e) {
       _setError('Verification Error: $e');
       return false;
@@ -157,6 +157,19 @@ class BookingProvider with ChangeNotifier {
       _setLoading(false);
     }
   }
+
+  // Handle cancelled or failed payment
+  Future<void> markPaymentFailed(String bookingId, String reason) async {
+    try {
+      await ApiClient.post('/bookings/payment-failure', {
+        'bookingId': bookingId,
+        'reason': reason,
+      });
+    } catch (e) {
+      debugPrint('Failed to notify backend about payment failure: $e');
+    }
+  }
+
 
   // Update status (Accept, Reject, Start, Complete)
   Future<bool> updateStatus(String bookingId, String action) async {

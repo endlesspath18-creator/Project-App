@@ -33,8 +33,9 @@ class AppConstants {
 
   // Admin Endpoints
 
-  static const String adminStats = '/admin/dashboard/stats';
-  static const String adminFinance = '/admin/finance/summary';
+  static const String adminStats = '/admin/stats';
+  static const String adminFinance = '/admin/finance/revenue-stats';
+
   static const String adminProviders = '/admin/providers';
 
 
