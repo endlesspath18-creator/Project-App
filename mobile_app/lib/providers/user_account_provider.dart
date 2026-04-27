@@ -25,6 +25,11 @@ class UserAccountProvider extends ChangeNotifier {
   List<dynamic> get tickets => _tickets;
   Map<String, dynamic>? get profile => _profile;
 
+  // Stats Helpers
+  int get activeCount => _dashboardData?['activeCount'] ?? 0;
+  double get totalSpent => (_dashboardData?['totalSpent'] as num?)?.toDouble() ?? 0.0;
+
+
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();

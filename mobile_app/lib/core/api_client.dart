@@ -176,9 +176,11 @@ class ApiClient {
         return await action();
       }
       _log('Refresh failed. Redirecting to login.');
+      await StorageService.deleteTokens();
       rethrow;
     }
   }
+
 
   static Future<bool> _performRefresh() async {
     final refreshToken = await StorageService.getRefreshToken();

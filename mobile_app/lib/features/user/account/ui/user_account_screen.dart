@@ -20,26 +20,10 @@ class UserAccountScreen extends StatefulWidget {
   State<UserAccountScreen> createState() => _UserAccountScreenState();
 }
 
-class _UserAccountScreenState extends State<UserAccountScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  final List<String> _tabNames = [
-    'Dashboard',
-    'Bookings',
-    'Favorites',
-    'Payments',
-    'Alerts',
-    'Profile',
-    'Support',
-  ];
-
+class _UserAccountScreenState extends State<UserAccountScreen> {
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 7, vsync: this);
-    _tabController.addListener(() {
-       setState(() {});
-    });
-    
     // Initial fetch
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<UserAccountProvider>(context, listen: false);
@@ -49,121 +33,184 @@ class _UserAccountScreenState extends State<UserAccountScreen> with SingleTicker
   }
 
   @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
     final user = auth.user;
+    final accountProvider = Provider.of<UserAccountProvider>(context);
+
 
     return Scaffold(
       backgroundColor: AppColors.bgLight,
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverAppBar(
-              expandedHeight: 200,
-              floating: false,
-              pinned: true,
-              backgroundColor: AppColors.primary,
-              elevation: 0,
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  decoration: const BoxDecoration(
-                    gradient: AppGradients.primary,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 40),
-                      FadeInDown(
-                        child: CircleAvatar(
-                          radius: 40,
-                          backgroundColor: Colors.white.withValues(alpha: 0.2),
-                          backgroundImage: user?.profileImage != null ? NetworkImage(user!.profileImage!) : null,
-                          child: user?.profileImage == null ? const Icon(Icons.person, size: 40, color: Colors.white) : null,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      FadeInUp(
-                        child: Text(
-                          user?.fullName ?? "Guest User",
-                          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      Text(
-                        user?.email ?? "",
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.settings_outlined, color: Colors.white),
-                  onPressed: () => _tabController.animateTo(5),
-                ),
-              ],
+      body: CustomScrollView(
+        slivers: [
+          _buildSliverAppBar(user),
+          
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              child: _buildQuickStats(accountProvider),
             ),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _SliverAppBarDelegate(
-                TabBar(
-                  controller: _tabController,
-                  isScrollable: true,
-                  labelColor: AppColors.primary,
-                  unselectedLabelColor: AppColors.textTertiary,
-                  indicatorColor: AppColors.primary,
-                  indicatorWeight: 3,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
-                  tabs: _tabNames.map((name) => Tab(text: name)).toList(),
-                ),
-              ),
+          ),
+
+
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                const SizedBox(height: 10),
+                _buildMenuSection("ACTIVITY", [
+                  _buildMenuItem(Icons.calendar_month_outlined, "My Bookings", "View your service history", () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const Scaffold(appBar: AppBar(title: Text("My Bookings")), body: MyBookingsTab())));
+                  }),
+                  _buildMenuItem(Icons.favorite_outline_rounded, "Favorites", "Your saved providers", () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const Scaffold(appBar: AppBar(title: Text("Favorites")), body: FavoritesTab())));
+                  }),
+                ]),
+
+                _buildMenuSection("WALLET & ALERTS", [
+                  _buildMenuItem(Icons.account_balance_wallet_outlined, "Payments", "Manage your cards & billing", () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const Scaffold(appBar: AppBar(title: Text("Payments")), body: PaymentsTab())));
+                  }),
+                  _buildMenuItem(Icons.notifications_none_rounded, "Alerts", "Notification center", () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const Scaffold(appBar: AppBar(title: Text("Alerts")), body: NotificationsTab())));
+                  }),
+                ]),
+
+                _buildMenuSection("ACCOUNT SETTINGS", [
+                  _buildMenuItem(Icons.person_outline_rounded, "Profile Details", "Edit your information", () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const Scaffold(appBar: AppBar(title: Text("Profile Settings")), body: ProfileSettingsTab())));
+                  }),
+                  _buildMenuItem(Icons.support_agent_rounded, "Help & Support", "Get assistance & contact us", () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const Scaffold(appBar: AppBar(title: Text("Support")), body: SupportTab())));
+                  }),
+                  _buildMenuItem(Icons.logout_rounded, "Logout", "Sign out of your account", () => _showLogoutDialog(context), color: Colors.redAccent),
+                ]),
+                
+                const SizedBox(height: 100),
+              ]),
             ),
-          ];
-        },
-        body: TabBarView(
-          controller: _tabController,
-          children: const [
-            AccountDashboardTab(),
-            MyBookingsTab(),
-            FavoritesTab(),
-            PaymentsTab(),
-            NotificationsTab(),
-            ProfileSettingsTab(),
-            SupportTab(),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSliverAppBar(user) {
+    return SliverAppBar(
+      expandedHeight: 180,
+      pinned: true,
+      backgroundColor: AppColors.primary,
+      elevation: 0,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: const BoxDecoration(gradient: AppGradients.primary),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 30),
+              CircleAvatar(
+                radius: 35,
+                backgroundColor: Colors.white.withValues(alpha: 0.2),
+                backgroundImage: user?.profileImage != null ? NetworkImage(user!.profileImage!) : null,
+                child: user?.profileImage == null ? const Icon(Icons.person, size: 30, color: Colors.white) : null,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                user?.fullName ?? "Guest User",
+                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                user?.email ?? "",
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildQuickStats(stats) {
+    return GlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStatItem("Bookings", "${stats?.activeCount ?? 0}"),
+          _buildStatDivider(),
+          _buildStatItem("Spent", "₹${stats?.totalSpent.toInt() ?? 0}"),
+          _buildStatDivider(),
+          _buildStatItem("Reviews", "0"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value) {
+    return Column(
+      children: [
+        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
+        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+      ],
+    );
+  }
+
+  Widget _buildStatDivider() {
+    return Container(width: 1, height: 30, color: AppColors.divider);
+  }
+
+  Widget _buildMenuSection(String title, List<Widget> items) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12, top: 20),
+          child: Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textTertiary, letterSpacing: 1.2)),
+        ),
+        GlassCard(
+          padding: EdgeInsets.zero,
+          child: Column(children: items),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMenuItem(IconData icon, String title, String subtitle, VoidCallback onTap, {Color? color}) {
+    return ListTile(
+      onTap: onTap,
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(color: (color ?? AppColors.primary).withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
+        child: Icon(icon, color: color ?? AppColors.primary, size: 20),
+      ),
+      title: Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: color ?? AppColors.textPrimary)),
+      subtitle: Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+      trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary, size: 20),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Logout"),
+        content: const Text("Are you sure you want to sign out?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<AuthProvider>().logout();
+            }, 
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: const Text("Logout"),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  _SliverAppBarDelegate(this._tabBar);
 
-  final TabBar _tabBar;
 
-  @override
-  double get minExtent => _tabBar.preferredSize.height;
-  @override
-  double get maxExtent => _tabBar.preferredSize.height;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: Colors.white,
-      child: _tabBar,
-    );
-  }
-
-  @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return false;
-  }
-}
