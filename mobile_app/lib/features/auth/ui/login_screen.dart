@@ -38,9 +38,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (success) {
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(
-        authProvider.isProvider ? AppRoutes.providerHome : AppRoutes.userHome,
-      );
+      if (authProvider.isAdmin) {
+        Navigator.of(context).pushReplacementNamed(AppRoutes.adminDashboard);
+      } else {
+        Navigator.of(context).pushReplacementNamed(
+          authProvider.isProvider ? AppRoutes.providerHome : AppRoutes.userHome,
+        );
+      }
     } else {
       if (!mounted) return;
       final error = authProvider.error ?? 'Login failed';

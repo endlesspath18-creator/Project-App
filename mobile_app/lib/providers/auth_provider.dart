@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:mobile_app/core/api_client.dart';
 import 'package:mobile_app/core/constants.dart';
@@ -96,7 +95,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ─── Register ──────────────────────────────────────────────────────────────
-  Future<bool> register({
+  Future<Map<String, dynamic>?> register({
     required String fullName,
     required String email,
     required String password,
@@ -117,17 +116,41 @@ class AuthProvider extends ChangeNotifier {
       if (businessName != null && businessName.isNotEmpty) body['businessName'] = businessName;
 
       final response = await ApiClient.post(AppConstants.registerEndpoint, body);
-      final authResponse = AuthResponse.fromJson(response.data);
+      _setLoading(false);
+      
+      // Return the data which might contain debug OTP
+      return response.data['data'];
+    } on ApiException catch (e) {
+      _setError(e.message);
+      _setLoading(false);
+      return null;
+    }
+  }
 
+  // ─── Verify OTP ────────────────────────────────────────────────────────────
+  Future<bool> verifyOtp(String email, String otp) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      final response = await ApiClient.post(AppConstants.verifyOtpEndpoint, {
+        'email': email,
+        'otp': otp,
+      });
+
+      final authResponse = AuthResponse.fromJson(response.data);
       if (authResponse.token != null) {
         await StorageService.saveToken(authResponse.token!);
         if (authResponse.refreshToken != null) {
           await StorageService.saveRefreshToken(authResponse.refreshToken!);
         }
         _user = authResponse.user;
+        _setLoading(false);
+        return true;
       }
+
+      _setError('Verification failed: no token received.');
       _setLoading(false);
-      return true;
+      return false;
     } on ApiException catch (e) {
       _setError(e.message);
       _setLoading(false);
@@ -171,7 +194,6 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> updateProfile({String? fullName, String? phone, String? businessName}) async {
     _setLoading(true);
     try {
-      // First update generic user info
       if (fullName != null || phone != null) {
         await ApiClient.patch(AppConstants.meProfile, {
           'fullName': fullName,
@@ -179,8 +201,6 @@ class AuthProvider extends ChangeNotifier {
         });
       }
 
-
-      // If provider, update business name
       if (isProvider && businessName != null) {
         await ApiClient.patch('/provider/profile', {
           'businessName': businessName,
@@ -200,10 +220,18 @@ class AuthProvider extends ChangeNotifier {
 
   // ─── Logout ────────────────────────────────────────────────────────────────
   Future<void> logout() async {
-    await StorageService.deleteTokens();
-    _user = null;
-    _error = null;
-    notifyListeners();
+    try {
+      final refreshToken = await StorageService.getRefreshToken();
+      await ApiClient.post(AppConstants.logoutEndpoint, {
+        'refreshToken': refreshToken,
+      });
+    } catch (e) {
+      debugPrint('SERVER_LOGOUT_ERROR: $e');
+    } finally {
+      await StorageService.deleteTokens();
+      _user = null;
+      _error = null;
+      notifyListeners();
+    }
   }
 }
-

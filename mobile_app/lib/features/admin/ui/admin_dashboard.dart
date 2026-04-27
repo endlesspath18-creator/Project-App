@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app/core/app_routes.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:mobile_app/core/api_client.dart';
@@ -621,9 +622,15 @@ class _AdminSettingsTab extends StatelessWidget {
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<AuthProvider>().logout();
+            onPressed: () async {
+              final auth = context.read<AuthProvider>();
+              final navigator = Navigator.of(context, rootNavigator: true);
+              navigator.pop(); // Close dialog
+              
+              await auth.logout();
+              
+              // Direct navigation using captured navigator
+              navigator.pushNamedAndRemoveUntil(AppRoutes.splash, (route) => false);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
             child: const Text("Logout"),

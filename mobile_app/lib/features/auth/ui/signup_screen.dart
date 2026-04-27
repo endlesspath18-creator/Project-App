@@ -6,6 +6,8 @@ import 'package:mobile_app/core/app_routes.dart';
 import 'package:mobile_app/core/design_system.dart';
 import 'package:mobile_app/core/app_dimensions.dart';
 import 'package:mobile_app/widgets/glass_widgets.dart';
+import 'package:mobile_app/features/auth/ui/terms_screen.dart';
+import 'package:mobile_app/features/auth/ui/otp_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -24,6 +26,7 @@ class _SignupScreenState extends State<SignupScreen> {
   
   bool _isProvider = false;
   bool _isPasswordVisible = false;
+  bool _acceptedTerms = false;
 
   @override
   void dispose() {
@@ -38,20 +41,33 @@ class _SignupScreenState extends State<SignupScreen> {
   void _handleSignup() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (!_acceptedTerms) {
+      _showErrorSnackBar("Please accept the Terms & Conditions to proceed");
+      return;
+    }
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final success = await authProvider.register(
+    final String email = _emailController.text.trim();
+    
+    final data = await authProvider.register(
       fullName: _fullNameController.text.trim(),
-      email: _emailController.text.trim(),
+      email: email,
       phone: _phoneController.text.trim(),
       password: _passwordController.text.trim(),
       role: _isProvider ? 'PROVIDER' : 'USER',
       businessName: _isProvider ? _businessNameController.text.trim() : null,
     );
 
-    if (success) {
+    if (data != null) {
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(
-        _isProvider ? AppRoutes.providerHome : AppRoutes.userHome,
+      // Navigate to OTP verification screen
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => OTPScreen(
+            email: email,
+            debugOtp: data['debugOtp'], // Debug OTP passed for testing
+          ),
+        ),
       );
     } else {
       if (!mounted) return;
@@ -167,7 +183,42 @@ class _SignupScreenState extends State<SignupScreen> {
                                   onSuffixIconTap: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                                   validator: (v) => v!.length < 6 ? "Minimum 6 chars" : null,
                                 ),
-                                const SizedBox(height: AppDimensions.s32),
+                                
+                                const SizedBox(height: AppDimensions.s16),
+                                Row(
+                                  children: [
+                                    SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: Checkbox(
+                                        value: _acceptedTerms,
+                                        onChanged: (v) => setState(() => _acceptedTerms = v ?? false),
+                                        activeColor: AppColors.primary,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsScreen())),
+                                        child: RichText(
+                                          text: TextSpan(
+                                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                            children: [
+                                              const TextSpan(text: "I agree to the "),
+                                              TextSpan(
+                                                text: "Terms & Conditions",
+                                                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                
+                                const SizedBox(height: AppDimensions.s24),
                                 Consumer<AuthProvider>(
                                   builder: (context, auth, _) {
                                     return GlassButton(

@@ -41,7 +41,7 @@ class _ServiceMotionSplashState extends State<ServiceMotionSplash> with SingleTi
     // Smooth transition
     if (auth.isAuthenticated) {
       if (auth.isAdmin) {
-        Navigator.of(context).pushReplacementNamed(AppRoutes.adminHome);
+        Navigator.of(context).pushReplacementNamed(AppRoutes.adminDashboard);
       } else if (auth.isProvider) {
         Navigator.of(context).pushReplacementNamed(AppRoutes.providerHome);
       } else {

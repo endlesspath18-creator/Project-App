@@ -117,6 +117,7 @@ class _BookingScreenState extends State<BookingScreen> {
         serviceId: _service.id,
         address: _addressController.text.trim(),
         scheduledDate: combinedDate,
+        slot: _selectedTimeSlot,
         notes: _notesController.text.trim(),
         paymentMethod: "COD",
       );
@@ -132,6 +133,7 @@ class _BookingScreenState extends State<BookingScreen> {
         serviceId: _service.id,
         address: _addressController.text.trim(),
         scheduledDate: combinedDate,
+        slot: _selectedTimeSlot,
         notes: _notesController.text.trim(),
         paymentMethod: "ONLINE",
       );

@@ -208,7 +208,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 "Logout", 
                 "Sign out of your account", 
                 isDestructive: true,
-                onTap: () => auth.logout().then((_) => Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false)),
+                onTap: () async {
+                  final navigator = Navigator.of(context, rootNavigator: true);
+                  await auth.logout();
+                  navigator.pushNamedAndRemoveUntil(AppRoutes.splash, (route) => false);
+                },
               ),
               _ProfileItem(Icons.delete_forever_rounded, "Delete Account", "Permanently remove your data", isDestructive: true),
             ],

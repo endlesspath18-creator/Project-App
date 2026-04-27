@@ -9,36 +9,27 @@ export const register = async (req: Request, res: Response) => {
   console.log("[AuthController] Registration Attempt:", { 
     email: req.body.email, 
     role: req.body.role,
-    hasBusinessName: !!req.body.businessName 
   });
 
   const { fullName, email, phone, password, role, businessName } = req.body;
-
-  // Normalization
   const normalizedEmail = email.toLowerCase().trim();
 
   try {
-    // Check if user already exists
     const userExists = await prisma.user.findFirst({
-      where: { 
-        OR: [
-          { email: normalizedEmail },
-          ...(phone ? [{ phone: phone }] : [])
-        ]
-      },
+      where: { OR: [{ email: normalizedEmail }, ...(phone ? [{ phone: phone }] : [])] },
     });
 
     if (userExists) {
-      console.log("[AuthController] Registration Failed: User already exists", normalizedEmail);
       return sendError(res, 400, "User already exists with this email or phone number.");
     }
 
-    // Hash password
     const passwordHash = await hashPassword(password);
+    
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
 
-    // Use transaction to ensure both user and profile are created together if provider
     const result = await prisma.$transaction(async (tx) => {
-      console.log("[AuthController] Creating User record...");
       const user = await tx.user.create({
         data: {
           fullName,
@@ -46,47 +37,83 @@ export const register = async (req: Request, res: Response) => {
           phone,
           passwordHash,
           role,
-          isActive: true,
+          isActive: false, // Must verify first
+          verificationCode: otp,
+          otpExpiry,
         },
       });
-      console.log("[AuthController] User record created:", user.id);
 
-      if (role === "PROVIDER") {
-        if (!businessName) {
-          console.error("[AuthController] Role is PROVIDER but businessName is missing!");
-          throw new Error("Business name is required for provider registration.");
-        }
-
-        console.log("[AuthController] Creating ProviderProfile record...");
-        const profile = await tx.providerProfile.create({
-          data: {
-            userId: user.id,
-            businessName,
-          },
+      if (role === "PROVIDER" && businessName) {
+        await tx.providerProfile.create({
+          data: { userId: user.id, businessName },
         });
-        console.log("[AuthController] ProviderProfile record created:", profile.id);
       }
 
       return user;
     });
 
-    const { accessToken, refreshToken } = await generateAndSaveTokens(result.id, result.role);
+    // In a real app, send OTP via SMS/Email here
+    console.log(`[AUTH] OTP for ${normalizedEmail}: ${otp}`);
 
-    console.log("[AuthController] Registration Successful:", result.id);
-    return sendResponse(res, 201, "User registered successfully", {
+    return sendResponse(res, 201, "Registration successful. Please verify your account.", {
+      userId: result.id,
+      email: result.email,
+      phone: result.phone,
+      // For development ease, we return the OTP. REMOVE IN PRODUCTION!
+      debugOtp: otp, 
+    });
+  } catch (error: any) {
+    console.error("[AuthController] Registration Error:", error);
+    return sendError(res, 500, "Failed to create account.");
+  }
+};
+
+export const verifyOtp = async (req: Request, res: Response) => {
+  const { email, otp } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() }
+    });
+
+    if (!user) return sendError(res, 404, "User not found.");
+    if (user.isActive) return sendError(res, 400, "Account is already active.");
+
+    if (user.verificationCode !== otp) {
+      return sendError(res, 400, "Invalid verification code.");
+    }
+
+    if (user.otpExpiry && user.otpExpiry < new Date()) {
+      return sendError(res, 400, "Verification code has expired.");
+    }
+
+    // Mark as verified and active
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        isActive: true,
+        isEmailVerified: true,
+        isPhoneVerified: true,
+        verificationCode: null,
+        otpExpiry: null,
+      }
+    });
+
+    const { accessToken, refreshToken } = await generateAndSaveTokens(user.id, user.role);
+
+    return sendResponse(res, 200, "Account verified successfully", {
       token: accessToken,
       refreshToken,
       user: {
-        id: result.id,
-        fullName: result.fullName,
-        email: result.email,
-        role: result.role,
-        isRoleSet: true,
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        isRoleSet: user.isRoleSet,
       },
     });
   } catch (error: any) {
-    console.error("[AuthController] FATAL_REGISTRATION_ERROR:", error);
-    return sendError(res, 500, error.message || "Failed to create account. Please try again.");
+    return sendError(res, 500, "Verification failed.");
   }
 };
 
@@ -119,7 +146,9 @@ export const login = async (req: Request, res: Response) => {
 
     // Step 2: Check active status
     if (!user.isActive) {
-      console.log("[AuthController] Login Failed: Account Inactive", identifier);
+      if (user.verificationCode) {
+        return sendError(res, 403, "Account not verified. Please verify your email/phone.");
+      }
       return sendError(res, 403, "Your account is currently inactive. Please contact support.");
     }
 

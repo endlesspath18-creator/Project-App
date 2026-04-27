@@ -12,7 +12,8 @@ import { env } from "../../config/env";
  */
 export const createBooking = async (req: Request, res: Response) => {
   const userId = req.user!.id;
-  const { serviceId, scheduledDate, address, notes, idempotencyKey } = req.body;
+  const { serviceId, scheduledDate, address, notes, idempotencyKey, paymentMethod } = req.body;
+  const method = paymentMethod === "COD" ? "COD" : "ONLINE";
 
   try {
     // 0. Check idempotency
@@ -37,20 +38,47 @@ export const createBooking = async (req: Request, res: Response) => {
       const requestedStart = new Date(scheduledDate);
       const requestedEnd = new Date(requestedStart.getTime() + service.durationMinutes * 60000);
 
-      // 1.5 Check for overlapping bookings (Instant check)
-      const overlaps: any[] = await tx.$queryRaw`
-        SELECT id FROM "Booking"
-        WHERE "providerId" = ${service.providerId}
-        AND "status" NOT IN ('CANCELLED', 'REJECTED', 'EXPIRED')
-        AND "dateTime" < ${requestedEnd}
-        AND ("dateTime" + ("durationMinutes" * interval '1 minute')) > ${requestedStart}
-        LIMIT 1
-      `;
+      // 1.5 Check for overlapping bookings (Instant check) using Prisma API for better compatibility
+      const overlap = await tx.booking.findFirst({
+        where: {
+          providerId: service.providerId,
+          status: { notIn: ["CANCELLED", "REJECTED", "EXPIRED", "PAYMENT_FAILED"] },
+          AND: [
+            { dateTime: { lt: requestedEnd } },
+            { 
+              OR: [
+                // If we don't have durationMinutes in DB for some reason, assume 60
+                { dateTime: { gt: new Date(requestedStart.getTime() - 24 * 60 * 60000) } } 
+              ]
+            }
+          ]
+        }
+      });
 
-      if (overlaps.length > 0) throw new Error("PROVIDER_BUSY");
+      // Refined overlap check logic (Since raw SQL "interval" is tricky across DBs)
+      // We'll fetch potential overlaps and filter in JS if needed, but for now let's use a simpler range
+      const potentialOverlaps = await tx.booking.findMany({
+        where: {
+          providerId: service.providerId,
+          status: { notIn: ["CANCELLED", "REJECTED", "EXPIRED", "PAYMENT_FAILED"] },
+          dateTime: {
+            gte: new Date(requestedStart.getTime() - 4 * 60 * 60000), // 4 hours before
+            lte: new Date(requestedStart.getTime() + 4 * 60 * 60000), // 4 hours after
+          }
+        }
+      });
 
-      // 2. Create the booking in PAYMENT_PENDING state
-      const holdExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 min payment lock
+      for (const b of potentialOverlaps) {
+        const bStart = b.dateTime.getTime();
+        const bEnd = bStart + (b.durationMinutes || 60) * 60000;
+        if (requestedStart.getTime() < bEnd && requestedEnd.getTime() > bStart) {
+          throw new Error("PROVIDER_BUSY");
+        }
+      }
+
+      // 2. Create the booking
+      const holdExpiresAt = method === "ONLINE" ? new Date(Date.now() + 15 * 60 * 1000) : null;
+      const initialStatus = method === "ONLINE" ? "PAYMENT_PENDING" : "REQUESTED";
 
       const newBooking = await tx.booking.create({
         data: {
@@ -58,46 +86,52 @@ export const createBooking = async (req: Request, res: Response) => {
           providerId: service.providerId,
           serviceId,
           dateTime: requestedStart,
-          slot: req.body.slot,
+          slot: req.body.slot || "Unspecified Slot",
           durationMinutes: service.durationMinutes,
           address,
           notes,
           amount: service.price,
-          paymentMethod: "ONLINE", // Instant bookings are typically online
-          status: "PAYMENT_PENDING",
+          paymentMethod: method,
+          status: initialStatus,
           holdExpiresAt,
           idempotencyKey
         }
       });
 
-      // 3. Initiate Razorpay Order immediately
-      const order = await createRazorpayOrder(service.price, newBooking.id);
+      let order = null;
+      if (method === "ONLINE") {
+        // 3. Initiate Razorpay Order immediately
+        order = await createRazorpayOrder(service.price, newBooking.id);
 
-      // 4. Update booking with Order ID
-      const finalBooking = await tx.booking.update({
-        where: { id: newBooking.id },
-        data: { orderId: order.id }
-      });
+        // 4. Update booking with Order ID
+        await tx.booking.update({
+          where: { id: newBooking.id },
+          data: { orderId: order.id }
+        });
+      }
 
       // 5. Log event
       await tx.bookingEvent.create({
         data: {
           bookingId: newBooking.id,
           fromStatus: "DRAFT",
-          toStatus: "PAYMENT_PENDING",
+          toStatus: initialStatus,
           actorId: userId,
-          meta: { razorpayOrderId: order.id }
+          meta: method === "ONLINE" ? { razorpayOrderId: order?.id } : { method: "COD" }
         }
       });
 
       return { 
-        booking: finalBooking, 
+        booking: newBooking, 
         razorpayOrder: order,
-        key: env.RAZORPAY_KEY_ID
+        key: order ? env.RAZORPAY_KEY_ID : null
       };
     });
 
-    sendResponse(res, 201, "Booking initiated. Complete payment to confirm.", result);
+    const successMsg = method === "ONLINE" 
+      ? "Booking initiated. Complete payment to confirm." 
+      : "Booking requested successfully.";
+    sendResponse(res, 201, successMsg, result);
   } catch (error: any) {
     if (error.message === "SERVICE_NOT_FOUND") return sendError(res, 404, "Service not found");
     if (error.message === "SERVICE_INACTIVE") return sendError(res, 400, "This service is currently disabled");
@@ -106,8 +140,9 @@ export const createBooking = async (req: Request, res: Response) => {
        return sendError(res, 502, "Failed to connect to payment gateway. Please verify RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in Render environment variables.");
     }
     
-    console.error("Booking Error:", error);
-    sendError(res, 500, "Failed to initiate booking");
+    console.error("Booking Error Detail:", error);
+    // Returning the actual error message to the client temporarily for easier production debugging
+    sendError(res, 500, `Failed to initiate booking: ${error.message || 'Unknown Error'}`);
   }
 };
 

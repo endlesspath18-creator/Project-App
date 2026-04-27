@@ -46,12 +46,17 @@ model User {
   role         Role     @default(USER)
   isRoleSet    Boolean  @default(true)
   googleId     String?  @unique
-  isActive     Boolean  @default(true)
+  isActive     Boolean  @default(false)
   profileImage String?
   createdAt    DateTime @default(now())
   hasPaidPublishingFee Boolean  @default(false)
   canPublishService    Boolean  @default(false)
   isVerified           Boolean  @default(false)
+  
+  isEmailVerified      Boolean  @default(false)
+  isPhoneVerified      Boolean  @default(false)
+  verificationCode     String?
+  otpExpiry            DateTime?
   
   providerProfile ProviderProfile?
   services     Service[]

@@ -4,8 +4,10 @@ class AppConstants {
   static const String appName = 'EndlessPath Services';
 
   // API Endpoints
-  static const String loginEndpoint = '/auth/login';
   static const String registerEndpoint = '/auth/register';
+  static const String verifyOtpEndpoint = '/auth/verify-otp';
+  static const String loginEndpoint = '/auth/login';
+  static const String logoutEndpoint = '/auth/logout';
   static const String verifyMeEndpoint = '/auth/me';
   static const String servicesEndpoint = '/services';
   static const String providerServicesEndpoint = '/services/my';

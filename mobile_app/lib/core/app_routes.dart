@@ -34,7 +34,7 @@ class AppRoutes {
   static const String signup = '/signup';
   static const String forgotPassword = '/forgotPassword';
   static const String otp = '/otp';
-  static const String adminHome = '/adminHome';
+  static const String adminDashboard = '/adminDashboard';
   
   // User Panel
   static const String userHome = '/userHome';
@@ -70,7 +70,13 @@ class AppRoutes {
       login: (context) => const LoginScreen(),
       signup: (context) => const SignupScreen(),
       forgotPassword: (context) => const ForgotPasswordScreen(),
-      otp: (context) => const OTPScreen(),
+      otp: (context) {
+        final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+        return OTPScreen(
+          email: args?['email'] ?? "",
+          debugOtp: args?['debugOtp'],
+        );
+      },
       
       // User Screens
       userHome: (context) => const UserMainScreen(),
@@ -99,7 +105,7 @@ class AppRoutes {
       changePassword: (context) => const ChangePasswordScreen(),
 
       // Admin Screens
-      adminHome: (context) => const AdminDashboard(),
+      adminDashboard: (context) => const AdminDashboard(),
       adminFinance: (context) => const AdminFinanceScreen(),
     };
   }

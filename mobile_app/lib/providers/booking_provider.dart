@@ -105,6 +105,7 @@ class BookingProvider with ChangeNotifier {
     required String serviceId,
     required DateTime scheduledDate,
     required String address,
+    required String slot,
     String? notes,
     String paymentMethod = 'COD',
   }) async {
@@ -114,10 +115,10 @@ class BookingProvider with ChangeNotifier {
       final response = await ApiClient.post(AppConstants.createBooking, {
         'serviceId': serviceId,
         'scheduledDate': scheduledDate.toUtc().toIso8601String(),
+        'slot': slot,
         'address': address,
         'notes': notes,
         'paymentMethod': paymentMethod,
-        'paymentStatus': 'PENDING',
       });
 
       if (response.statusCode == 201) return response.data['data'];
