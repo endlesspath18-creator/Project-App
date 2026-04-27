@@ -152,6 +152,19 @@ class ApiClient {
     });
   }
 
+  static Future<ApiResponse> delete(String endpoint) async {
+    return _withRefresh(() async {
+      final url = Uri.parse('${AppConstants.baseUrl}$endpoint');
+      _log('DELETE $url');
+      final headers = await _buildHeaders(endpoint);
+      final response = await _executeWithRetry(
+        () => http.delete(url, headers: headers),
+      );
+      return _parseResponse(response);
+    });
+  }
+
+
   static Future<ApiResponse> _withRefresh(Future<ApiResponse> Function() action) async {
     try {
       return await action();

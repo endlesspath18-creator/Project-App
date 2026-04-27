@@ -30,7 +30,9 @@ class AppColors {
   // Design Tokens
   static const Color glassBackground = Color.fromRGBO(255, 255, 255, 0.95);
   static const Color glassBorder = Color.fromRGBO(4, 95, 86, 0.1);
+  static const Color bgLight = Color(0xFFF3F4F6);
 }
+
 
 class AppGradients {
   static const LinearGradient primary = LinearGradient(

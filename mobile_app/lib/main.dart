@@ -9,7 +9,9 @@ import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:mobile_app/providers/service_provider.dart';
 import 'package:mobile_app/providers/booking_provider.dart';
 import 'package:mobile_app/providers/dashboard_provider.dart';
+import 'package:mobile_app/providers/user_dashboard_provider.dart';
 import 'package:mobile_app/providers/user_account_provider.dart';
+
 
 void main() async {
 

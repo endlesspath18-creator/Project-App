@@ -181,7 +181,19 @@ class UserAccountProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> removeFavorite(String id) async {
+    try {
+      await ApiClient.delete('${AppConstants.meFavorites}/$id');
+      await fetchFavorites();
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    }
+  }
+
   Future<bool> markNotificationRead(String id) async {
+
 
     try {
       await ApiClient.patch('${AppConstants.meNotifications}/$id/read', {});

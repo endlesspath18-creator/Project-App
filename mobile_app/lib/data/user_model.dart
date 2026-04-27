@@ -10,6 +10,7 @@ class UserModel {
   final bool hasPaidPublishingFee;
   final bool canPublishService;
   final bool isOnline;
+  final String? profileImage;
   final Map<String, dynamic>? providerProfile;
 
   UserModel({
@@ -23,8 +24,10 @@ class UserModel {
     this.hasPaidPublishingFee = false,
     this.canPublishService = false,
     this.isOnline = true,
+    this.profileImage,
     this.providerProfile,
   });
+
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
@@ -38,7 +41,9 @@ class UserModel {
       hasPaidPublishingFee: json['hasPaidPublishingFee'] == true,
       canPublishService: json['canPublishService'] == true,
       isOnline: json['providerProfile']?['isOnline'] ?? true,
+      profileImage: json['profileImage'],
       providerProfile: json['providerProfile'],
+
     );
   }
 
@@ -54,7 +59,9 @@ class UserModel {
       'hasPaidPublishingFee': hasPaidPublishingFee,
       'canPublishService': canPublishService,
       'isOnline': isOnline,
+      'profileImage': profileImage,
       'providerProfile': providerProfile,
+
     };
   }
 }

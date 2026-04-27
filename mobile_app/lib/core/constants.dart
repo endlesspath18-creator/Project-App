@@ -27,6 +27,12 @@ class AppConstants {
   static const String meLogoutAll = '/me/logout-all';
   static const String meSupport = '/me/support/tickets';
 
+  // Admin Endpoints
+  static const String adminStats = '/admin/dashboard/stats';
+  static const String adminFinance = '/admin/finance/summary';
+  static const String adminProviders = '/admin/providers';
+
+
   // Booking Actions
   static String cancelBooking(String id) => '/bookings/$id/cancel';
   static String rescheduleBooking(String id) => '/bookings/$id/reschedule';
