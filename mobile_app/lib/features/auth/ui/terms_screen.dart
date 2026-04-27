@@ -10,7 +10,7 @@ class TermsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bgLight,
       appBar: AppBar(
-        title: const Text("Terms & Conditions", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("Platform Policies", style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -19,139 +19,132 @@ class TermsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            const Icon(Icons.gavel_rounded, size: 60, color: AppColors.primary),
+            const Icon(Icons.security_rounded, size: 60, color: AppColors.primary),
             const SizedBox(height: 16),
             const Text(
               "ENDLESSPATH",
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 2),
             ),
             const Text(
-              "TERMS OF USE & PLATFORM POLICY",
+              "COMPLETE APP DETAILS & POLICIES",
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
             ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text(
-                "LEGAL DRAFT",
-                style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-              ),
-            ),
             const SizedBox(height: 32),
-            
+
             _buildTermSection(
-              "1", "PLATFORM ROLE (VERY IMPORTANT)",
-              "Endlesspath is ONLY a technology marketplace platform that connects Users with independent Service Providers.",
+              "1", "INTRODUCTION",
+              "Endlesspath is a technology-based platform designed to connect users with independent service providers. We simplify everyday needs by providing access to multiple services through a single application.",
+            ),
+
+            _buildTermSection(
+              "2", "ABOUT THE APP",
+              "Endlesspath provides access to a wide range of services including Transportation, Home Services, Delivery, Repairs, Local Workers, Education Services, and more.",
+              footer: "Vision: Simple, fast, and reliable all-in-one service platform.",
+            ),
+
+            _buildTermSection(
+              "3", "PLATFORM ROLE & OPERATION",
+              "Endlesspath is a marketplace platform only. We do not provide services directly.",
               items: [
-                "The Company DOES NOT provide any services directly.",
-                "All services are provided SOLELY by third-party Service Providers.",
+                "All providers are independent third parties.",
+                "No employer-employee relationship exists.",
+                "Platform operates on a commission-based model.",
               ],
               isWarning: true,
             ),
-            
-            _buildTermSection(
-              "2", "INDEPENDENT CONTRACTORS",
-              "All Service Providers are INDEPENDENT CONTRACTORS.",
-              items: [
-                "No employer-employee, partnership, or agency relationship exists with the Company.",
-              ],
-            ),
-            
-            _buildTermSection(
-              "3", "ZERO LIABILITY FOR SERVICES",
-              "The Company shall NOT be responsible for:",
-              items: [
-                "Service quality issues",
-                "Delays or cancellations",
-                "Accidents, damages, or losses",
-                "Misconduct by Service Providers",
-              ],
-              footer: "All responsibility lies with the Service Provider and User directly.",
-            ),
 
             _buildTermSection(
-              "4", "USER RESPONSIBILITY",
-              "Users agree to:",
+              "4", "ACCOUNT & SECURITY",
+              "Users are responsible for their account activity.",
               items: [
-                "Verify service provider details",
-                "Use services at their OWN RISK",
+                "Do not share OTPs or login details with anyone.",
+                "Unauthorized usage due to negligence is the user's responsibility.",
               ],
             ),
 
             _buildTermSection(
-              "5", "PAYMENTS & COMMISSION",
-              "Payment handling details:",
+              "5", "COMMUNICATION & RESPECT",
+              "Endlesspath promotes equality and respect for all. All communication must be respectful.",
               items: [
-                "Platform may collect payments on behalf of providers",
-                "Company charges a COMMISSION / SERVICE FEE",
-                "All taxes (including GST) apply as per law",
+                "Strictly prohibited: Abuse, threats, or misuse.",
+                "Zero Tolerance: Comments against religion, caste, region, or community.",
+                "Abusive or discriminatory behavior leads to permanent ban.",
               ],
-            ),
-
-            _buildTermSection(
-              "6", "LIMITATION OF LIABILITY",
-              "To the maximum extent permitted by law, Endlesspath shall NOT be liable for indirect, incidental, or consequential damages including loss of money, data, or reputation.",
-            ),
-
-            _buildTermSection(
-              "7", "INDEMNIFICATION",
-              "Users & Service Providers agree to PROTECT and COMPENSATE the Company against:",
-              items: [
-                "Legal claims",
-                "Losses due to misuse, negligence, or violations",
-              ],
-            ),
-
-            _buildTermSection(
-              "8", "STRICT NEUTRALITY POLICY",
-              "The Platform maintains STRICT NEUTRALITY and EQUALITY.",
-              items: [
-                "No promotion or propagation of any: Religion, Political ideology, Caste or community-based discrimination.",
-                "Endlesspath believes ALL RELIGIONS AND INDIVIDUALS ARE EQUAL.",
-              ],
-              footer: "Any violation may result in IMMEDIATE ACCOUNT SUSPENSION OR REMOVAL.",
               highlight: true,
             ),
 
             _buildTermSection(
-              "9", "PROHIBITED ACTIVITIES",
-              "Users & Providers must NOT:",
+              "6", "SERVICE & LOCATION ACCURACY",
+              "Services depend on user location and accurate data.",
               items: [
-                "Perform illegal activities",
-                "Share false information",
-                "Engage in fraud or harmful conduct",
+                "Users must provide correct information.",
+                "Incorrect data may affect service quality or lead to cancellation.",
               ],
             ),
 
             _buildTermSection(
-              "10", "ACCOUNT SUSPENSION",
-              "The Company reserves the right to:",
+              "7", "SERVICE PROVIDER TERMS",
+              "Providers are expected to maintain professional standards.",
               items: [
-                "Suspend or terminate accounts",
-                "Without prior notice",
+                "Deliver genuine services and follow applicable laws.",
+                "Maintain quality, safety, and respect for users.",
               ],
-              footer: "If any misuse, fraud, or policy violation occurs.",
             ),
 
             _buildTermSection(
-              "11", "COMPLIANCE WITH LAW",
-              "All users must follow APPLICABLE INDIAN LAWS AND REGULATIONS.",
+              "8", "PAYMENTS, CANCELLATIONS & REFUNDS",
+              "Standard financial policies apply to all bookings.",
+              items: [
+                "Service charges and platform fees may apply.",
+                "Refunds depend on providers; Endlesspath assists but does not guarantee them.",
+              ],
             ),
 
             _buildTermSection(
-              "12", "GOVERNING LAW",
-              "This Agreement is governed by the LAWS OF INDIA, and disputes fall under jurisdiction of courts in our registered location.",
+              "9", "PRIVACY POLICY & DATA",
+              "We value your privacy and handle data with care.",
+              items: [
+                "We collect Name, Phone, Location, and Usage data.",
+                "Data is used for service delivery and platform improvement.",
+                "WE DO NOT SELL YOUR PERSONAL DATA.",
+              ],
+              footer: "Data may be used for analytics to improve service quality.",
             ),
 
+            _buildTermSection(
+              "10", "DISCLAIMER & LIABILITY",
+              "Endlesspath is NOT responsible for:",
+              items: [
+                "Service quality or delays.",
+                "Damages caused by third-party providers.",
+                "Actions or behavior of independent providers.",
+              ],
+              footer: "Use services at your own discretion.",
+            ),
+
+            _buildTermSection(
+              "11", "JURISDICTION & UPDATES",
+              "Terms are governed by the laws of India. Disputes are subject to local jurisdiction.",
+              footer: "Policies may change as the platform evolves.",
+            ),
+
+            _buildTermSection(
+              "12", "BETA & STARTUP NOTICE",
+              "Endlesspath is currently in its early-stage / startup phase.",
+              items: [
+                "Currently in Beta: Features and services may change.",
+                "Registration: Compliance and registration processes are in progress.",
+              ],
+              highlight: true,
+            ),
+
+            const SizedBox(height: 32),
+            _buildContactSection(),
             const SizedBox(height: 40),
             const Text(
-              "Final Note: This is a startup-level legal draft. Clauses may change based on service operations.",
+              "❤️ FINAL STATEMENT\nEndlesspath aims to build a trusted, simple, and equal platform for everyone. We are committed to transparency and growth.",
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 10, color: AppColors.textTertiary, fontStyle: FontStyle.italic),
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 40),
           ],
@@ -223,6 +216,32 @@ class TermsScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildContactSection() {
+    return GlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          const Text("📩 CONTACT US", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 16),
+          _contactItem(Icons.camera_alt_outlined, "Instagram", "@endlesspath._"),
+          const SizedBox(height: 12),
+          _contactItem(Icons.email_outlined, "Email", "endlesspath18@email.com"),
+        ],
+      ),
+    );
+  }
+
+  Widget _contactItem(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: AppColors.primary),
+        const SizedBox(width: 12),
+        Text("$label: ", style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+        Text(value, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+      ],
     );
   }
 }
